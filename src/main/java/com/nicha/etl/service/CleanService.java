@@ -47,7 +47,7 @@ public class CleanService {
                 }
             }
 
-            // Lưu dữ liệu đã làm sạch vào bảng `Product`
+           
             stagingHeadPhoneDailyRepository.saveAll(cleanedData);
 
             loggingService.logProcess("Clean Data", "Successfully cleaned data", "SUCCESS");

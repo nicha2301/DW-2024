@@ -23,12 +23,12 @@ Khi bảng staging có dữ liệu, sẽ có 1 proc để load từ staging vào
 -- tạo bảng tạm cho nguồn cellphones
 CREATE TABLE if not exists staging_head_phone
 (
-    id            BIGINT AUTO_INCREMENT NOT NULL,
+    id            INT AUTO_INCREMENT NOT NULL,
     product_id    VARCHAR(255)          NULL,
     name          VARCHAR(255)          NULL,
     brand         VARCHAR(255)          NULL,
     type          VARCHAR(255)          NULL,
-    price         DECIMAL               NULL,
+    price         VARCHAR(255)          NULL,
     warranty_info VARCHAR(255)          NULL,
     feature       VARCHAR(255)          NULL,
     voice_control VARCHAR(255)          NULL,
@@ -44,7 +44,7 @@ CREATE TABLE if not exists staging_head_phone
 -- Tạo bảng staging để lưu dữ liệu từ bảng tạm
 CREATE TABLE if not exists staging_head_phone_daily
 (
-    id            BIGINT AUTO_INCREMENT NOT NULL,
+    id            INT AUTO_INCREMENT NOT NULL,
     product_id    VARCHAR(255)          NULL,
     name          VARCHAR(255)          NULL,
     brand         VARCHAR(255)          NULL,
