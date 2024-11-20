@@ -21,7 +21,7 @@ Khi bảng staging có dữ liệu, sẽ có 1 proc để load từ staging vào
 -- WAREHOUSE
 
 
-CREATE TABLE IF NOT EXISTS product_dim (
+CREATE TABLE IF NOT EXISTS head_phone (
 	`id` int NOT NULL AUTO_INCREMENT,
 	`product_id` varchar(255) DEFAULT NULL,
 	`name` varchar(255) DEFAULT NULL,
@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS date_dim (
 );
 
 
-ALTER TABLE product_dim
+ALTER TABLE head_phone
 	ADD COLUMN date_insert_fk int;
-ALTER TABLE product_dim
+ALTER TABLE head_phone
     ADD CONSTRAINT fk_date_insert FOREIGN KEY (date_insert_fk) REFERENCES date_dim(date_sk);

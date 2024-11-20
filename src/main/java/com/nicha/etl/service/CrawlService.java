@@ -94,11 +94,4 @@ public class CrawlService {
         return products;
     }
 
-
-
-    private String getSafeString(JSONObject jsonObject, String key) {
-        return jsonObject.has(key) && !jsonObject.isNull(key) ? jsonObject.getString(key) : "";
-    }
-
-
 }
