@@ -7,20 +7,23 @@ B3: Xử lý dữ liệu bị trùng
 	+ Tìm tới các productId có trong bảng temp_update_id và chỉnh sửa các cột giá trị isDelete = True, expried_date = NOW(), date_delete = NOW()
 	+ Insert từ cleaned_data các dòng có id trong temp_update_id vào
 */
+use products_db;
+
+drop procedure if exists load_data_to_warehouse;
 DELIMITER $$
 
 CREATE PROCEDURE load_data_to_warehouse()
 BEGIN
-    DECLARE current_date DATE;
-    SET current_date = CURDATE();
+    DECLARE curr_date DATE;
+    SET curr_date = CURDATE();
 
     -- B1: Xử lý dữ liệu bị xóa
 UPDATE head_phone AS wh
     LEFT JOIN staging_head_phone_daily AS stg
 ON wh.product_id = stg.product_id
     SET wh.isDelete = TRUE,
-        wh.expired_date = current_date,
-        wh.date_delete = current_date
+        wh.expired_date = curr_date,
+        wh.date_delete = curr_date
 WHERE stg.product_id IS NULL AND wh.isDelete = FALSE;
 
 -- B2: Insert các dòng mới (product_id chưa tồn tại trong warehouse)
@@ -65,12 +68,16 @@ WHERE (
           );
 
 -- Tìm tới các productId có trong bảng temp_update_id và chỉnh sửa các cột giá trị isDelete = True, expried_date = NOW(), date_delete = NOW()
-UPDATE head_phone AS wh
-    INNER JOIN temp_update_id AS temp
-ON wh.product_id = temp.product_id
-    SET wh.isDelete = TRUE,
-        wh.expired_date = current_date,
-        wh.date_delete = current_date;
+-- Kiểm tra dữ liệu trong temp_update_id
+    IF (SELECT COUNT(*) FROM temp_update_id) > 0 THEN
+        -- Chỉ thực hiện UPDATE nếu temp_update_id có dữ liệu
+        UPDATE head_phone AS wh
+            INNER JOIN temp_update_id AS temp
+            ON wh.product_id = temp.product_id
+        SET wh.isDelete = TRUE,
+            wh.expired_date = curr_date,
+            wh.date_delete = curr_date;
+    END IF;
 
 -- Chèn các dòng cập nhật từ staging vào warehouse
 INSERT INTO head_phone (
