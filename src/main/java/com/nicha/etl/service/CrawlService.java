@@ -90,7 +90,7 @@ public class CrawlService {
             product.setVoiceControl(attributes.optString("tai_nghe_dieu_khien"));
             product.setMicrophone(attributes.optString("tai_nghe_micro"));
             product.setBatteryLife(attributes.optString("tai_nghe_pin"));
-            product.setDimensions(attributes.optString("dimensions"));
+            product.setDimensions(attributes.optString("dimensions", attributes.optString("tai_nghe_kich_thuoc_driver", attributes.optString("tai_nghe_do_dai_day", ""))));
             product.setWeight(attributes.optString("product_weight"));
             product.setCompatibility(attributes.optString("tai_nghe_tuong_thich"));
             product.setCreatedAt(String.valueOf(LocalDateTime.now()));
