@@ -15,6 +15,8 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.sql.Date;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -65,33 +67,38 @@ public class CrawlService {
         }
     }
 
-    
-    private List<StagingHeadPhone> processResponseData(String responseBody) {
-        List<StagingHeadPhone> products = new ArrayList<>();
-        JSONArray data = new JSONArray(responseBody);
 
-        for (int i = 0; i < data.length(); i++) {
-            JSONObject jsonObject = data.getJSONObject(i);
+    private List<StagingHeadPhone> processResponseData(String responseBody) {
+        List<StagingHeadPhone> productList = new ArrayList<>();
+        JSONObject jsonResponse = new JSONObject(responseBody);
+        JSONArray products = jsonResponse.getJSONObject("data").getJSONArray("products");
+
+        for (int i = 0; i < products.length(); i++) {
+            JSONObject productJson = products.getJSONObject(i);
+            JSONObject general = productJson.getJSONObject("general");
+            JSONObject attributes = general.getJSONObject("attributes");
+            JSONObject filterable = productJson.optJSONObject("filterable");
 
             StagingHeadPhone product = new StagingHeadPhone();
-            product.setProductId(jsonObject.optString("id"));
-            product.setName(jsonObject.optString("name"));
-            product.setBrand(jsonObject.optString("brand"));
-            product.setType(jsonObject.optString("type"));
-            product.setPrice(jsonObject.optBigDecimal("price", BigDecimal.ZERO));
-            product.setWarrantyInfo(jsonObject.optString("warrantyInfo"));
-            product.setFeature(jsonObject.optString("feature"));
-            product.setVoiceControl(jsonObject.optString("voiceControl"));
-            product.setMicrophone(jsonObject.optString("microphone"));
-            product.setBatteryLife(jsonObject.optString("batteryLife"));
-            product.setDimensions(jsonObject.optString("dimensions"));
-            product.setWeight(jsonObject.optString("weight"));
-            product.setCompatibility(jsonObject.optString("compatibility"));
+            product.setProductId(general.optString("product_id"));
+            product.setName(general.optString("name"));
+            product.setBrand(attributes.optString("phone_accessory_brands"));
+            product.setType(attributes.optString("mobile_accessory_type"));
+            product.setPrice(filterable != null ? filterable.optString("price") : "");
+            product.setWarrantyInfo(attributes.optString("warranty_information"));
+            product.setFeature(attributes.optString("tai_nghe_tinh_nang"));
+            product.setVoiceControl(attributes.optString("tai_nghe_dieu_khien"));
+            product.setMicrophone(attributes.optString("tai_nghe_micro"));
+            product.setBatteryLife(attributes.optString("tai_nghe_pin"));
+            product.setDimensions(attributes.optString("dimensions"));
+            product.setWeight(attributes.optString("product_weight"));
+            product.setCompatibility(attributes.optString("tai_nghe_tuong_thich"));
+            product.setCreatedAt(String.valueOf(LocalDateTime.now()));
 
-            products.add(product);
+            productList.add(product);
         }
 
-        return products;
+        return productList;
     }
 
 }
