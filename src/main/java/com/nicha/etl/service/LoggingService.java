@@ -1,24 +1,36 @@
 package com.nicha.etl.service;
 
-import com.nicha.etl.entity.EtlLog;
-import com.nicha.etl.repository.EtlLogRepository;
+import com.nicha.etl.entity.config.ProcessLogging;
+import com.nicha.etl.entity.config.ProcessTracker;
+import com.nicha.etl.repository.config.ProcessLogRepository;
+import com.nicha.etl.repository.config.ProcessTrackerRepository;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.sql.Date;
 import java.sql.Timestamp;
 
 @Service
 public class LoggingService {
 
     @Autowired
-    private EtlLogRepository etlLogRepository;
+    private ProcessLogRepository processLogRepository;
 
-    public void logProcess(String processName, String message, String status) {
-        EtlLog log = new EtlLog();
-        log.setProcessName(processName);
-        log.setLogMessage(message);
-        log.setStatus(status);
-        log.setTimestamp(new Timestamp(System.currentTimeMillis()));
-        etlLogRepository.save(log);
+    public void logProcess(ProcessTracker process, ProcessLogging.LogLevel status, String message) {
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        logProcess(process, status, message, timestamp, timestamp);
+    }
+
+    public void logProcess(ProcessTracker process, ProcessLogging.LogLevel status, String message, Timestamp startTimestamp, Timestamp endTimestamp) {
+        ProcessLogging logging = new ProcessLogging();
+        logging.setLevel(status);
+        logging.setMessage(message);
+        logging.setProcessTracker(process);
+        logging.setProcessStart(startTimestamp);
+        logging.setProcessEnd(endTimestamp);
+        logging.setDate(new Date(System.currentTimeMillis()));
+        processLogRepository.save(logging);
     }
 }

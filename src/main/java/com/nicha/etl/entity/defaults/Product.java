@@ -1,20 +1,17 @@
-package com.nicha.etl.entity;
+package com.nicha.etl.entity.defaults;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "staging_head_phone")
+@Table(name = "warehouse_records")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class StagingHeadPhone {
-
+public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -44,9 +41,6 @@ public class StagingHeadPhone {
     private String weight;
     private String compatibility;
 
-    @Column(name = "created_at", insertable = false, updatable = false)
-    private String createdAt;
-
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
 }
-
-
