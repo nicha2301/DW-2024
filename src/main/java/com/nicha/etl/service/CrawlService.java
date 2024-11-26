@@ -3,23 +3,18 @@ package com.nicha.etl.service;
 import com.nicha.etl.entity.config.DataSourceConfig;
 import com.nicha.etl.entity.config.ProcessLogging;
 import com.nicha.etl.entity.config.ProcessTracker;
+import com.nicha.etl.entity.defaults.StagingHeadPhone;
 import com.nicha.etl.repository.config.DataSourceConfigRepository;
 import com.nicha.etl.repository.config.ProcessTrackerRepository;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.sql.Date;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.Calendar;
-import java.util.GregorianCalendar;
 import java.util.List;
 
 @Service
@@ -75,7 +70,7 @@ public class CrawlService {
         List<DataSourceConfig> configs = this.dataSourceConfigRepository.findAll();
 
         // Iterate and work on them
-        for (DataSourceConfig config: configs) {
+        for (DataSourceConfig config : configs) {
             loggingService.logProcess(this.currentProcessTracker, ProcessLogging.LogLevel.INFO, "DataSource: " + config.toString());
         }
 
