@@ -24,7 +24,7 @@ public class StagingHeadPhone {
     private String name;
     private String brand;
     private String type;
-    private BigDecimal price;
+    private String price;
 
     @Column(name = "warranty_info")
     private String warrantyInfo;
@@ -43,7 +43,7 @@ public class StagingHeadPhone {
     private String weight;
     private String compatibility;
 
-    @Column(name = "created_at", insertable = false, updatable = false)
+    @Column(name = "created_at")
     private String createdAt;
 
 }

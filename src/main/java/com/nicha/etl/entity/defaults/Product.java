@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.Date;
 
 @Entity
 @Table(name = "warehouse_records")
@@ -42,5 +44,17 @@ public class Product {
     private String compatibility;
 
     @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
+    private Date createdAt;
+
+    private boolean isDelete;
+
+    @Column(name = "date_delete")
+    private Date dateDelete;
+
+    @Column(name = "date_insert")
+    private Timestamp dateInsert;
+
+    @Column(name = "expired_date")
+    private Date expiredDate;
+
 }

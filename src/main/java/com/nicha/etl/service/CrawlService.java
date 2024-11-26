@@ -8,6 +8,14 @@ import com.nicha.etl.repository.config.ProcessTrackerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.sql.Date;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.Calendar;
@@ -74,6 +82,40 @@ public class CrawlService {
         this.currentProcessTracker.setStatus(ProcessTracker.ProcessStatus.C_SE);
         this.currentProcessTracker.setEndTime(new Timestamp(System.currentTimeMillis()));
         this.processTrackerRepository.save(this.currentProcessTracker);
+    }
+
+
+    private List<StagingHeadPhone> processResponseData(String responseBody) {
+        List<StagingHeadPhone> productList = new ArrayList<>();
+        JSONObject jsonResponse = new JSONObject(responseBody);
+        JSONArray products = jsonResponse.getJSONObject("data").getJSONArray("products");
+
+        for (int i = 0; i < products.length(); i++) {
+            JSONObject productJson = products.getJSONObject(i);
+            JSONObject general = productJson.getJSONObject("general");
+            JSONObject attributes = general.getJSONObject("attributes");
+            JSONObject filterable = productJson.optJSONObject("filterable");
+
+            StagingHeadPhone product = new StagingHeadPhone();
+            product.setProductId(general.optString("product_id"));
+            product.setName(general.optString("name"));
+            product.setBrand(attributes.optString("phone_accessory_brands"));
+            product.setType(attributes.optString("mobile_accessory_type"));
+            product.setPrice(filterable != null ? filterable.optString("price") : "");
+            product.setWarrantyInfo(attributes.optString("warranty_information"));
+            product.setFeature(attributes.optString("tai_nghe_tinh_nang"));
+            product.setVoiceControl(attributes.optString("tai_nghe_dieu_khien"));
+            product.setMicrophone(attributes.optString("tai_nghe_micro"));
+            product.setBatteryLife(attributes.optString("tai_nghe_pin"));
+            product.setDimensions(attributes.optString("dimensions", attributes.optString("tai_nghe_kich_thuoc_driver", attributes.optString("tai_nghe_do_dai_day", ""))));
+            product.setWeight(attributes.optString("product_weight"));
+            product.setCompatibility(attributes.optString("tai_nghe_tuong_thich"));
+            product.setCreatedAt(String.valueOf(LocalDateTime.now()));
+
+            productList.add(product);
+        }
+
+        return productList;
     }
 
 }
