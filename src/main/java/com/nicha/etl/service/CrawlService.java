@@ -1,70 +1,82 @@
 package com.nicha.etl.service;
 
-import com.nicha.etl.entity.Product;
-import com.nicha.etl.entity.StagingHeadPhone;
-import com.nicha.etl.repository.ProductRepository;
-import com.nicha.etl.repository.StagingHeadPhoneRepository;
+import com.nicha.etl.entity.config.DataSourceConfig;
+import com.nicha.etl.entity.config.ProcessLogging;
+import com.nicha.etl.entity.config.ProcessTracker;
+import com.nicha.etl.entity.defaults.StagingHeadPhone;
+import com.nicha.etl.repository.config.DataSourceConfigRepository;
+import com.nicha.etl.repository.config.ProcessTrackerRepository;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.sql.Date;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.sql.Timestamp;
+import java.util.Calendar;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class CrawlService {
 
-    @Value("${etl.api-url}")
-    private String apiUrl;
-
-    @Value("${etl.query}")
-    private String query;
-
     private final LoggingService loggingService;
-    private final StagingHeadPhoneRepository stagingHeadPhoneRepository;
+    private final ProcessTrackerRepository processTrackerRepository;
+    private final DataSourceConfigRepository dataSourceConfigRepository;
+    private ProcessTracker currentProcessTracker;
 
     @Autowired
-    public CrawlService(LoggingService loggingService, StagingHeadPhoneRepository stagingHeadPhoneRepository) {
+    public CrawlService(LoggingService loggingService, ProcessTrackerRepository processTrackerRepository, DataSourceConfigRepository dataSourceConfigRepository) {
         this.loggingService = loggingService;
-        this.stagingHeadPhoneRepository = stagingHeadPhoneRepository;
+        this.dataSourceConfigRepository = dataSourceConfigRepository;
+        this.processTrackerRepository = processTrackerRepository;
+
+        this.currentProcessTracker = this.processTrackerRepository.findByProcessName(getClass().getName());
+        if (this.currentProcessTracker == null) {
+            this.currentProcessTracker = new ProcessTracker();
+            this.currentProcessTracker.setProcessName(getClass().getName());
+            this.currentProcessTracker.setStatus(ProcessTracker.ProcessStatus.C_RE);
+            this.processTrackerRepository.save(this.currentProcessTracker);
+        }
     }
 
-    public void crawlDataAndSaveToStaging() {
-        loggingService.logProcess("Crawl Data", "Starting data crawl from API: " + apiUrl, "IN_PROGRESS");
-        HttpClient client = HttpClient.newHttpClient();
+    private boolean sameDate(Timestamp timestamp1, Timestamp timestamp2) {
+        Calendar cal1 = Calendar.getInstance();
+        Calendar cal2 = Calendar.getInstance();
+        if (timestamp1 == null || timestamp2 == null)
+            return timestamp1 == timestamp2;
+        cal1.setTime(timestamp1);
+        cal2.setTime(timestamp2);
+        return cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR) &&
+                cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR);
+    }
 
-        // Create JSON payload with the query
-        JSONObject requestBody = new JSONObject();
-        requestBody.put("query", query);
-
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(apiUrl))
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(requestBody.toString()))
-                .build();
-
-        try {
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            String responseBody = response.body();
-
-            // Process and save data to staging
-            List<StagingHeadPhone> products = processResponseData(responseBody);
-            stagingHeadPhoneRepository.saveAll(products);
-
-            loggingService.logProcess("Crawl Data", "Successfully fetched data from API", "SUCCESS");
-        } catch (Exception e) {
-            loggingService.logProcess("Crawl Data", "Error fetching data from API: " + e.getMessage(), "ERROR");
+    public void crawlDataSourcesAndSaveToStaging() {
+        if (this.currentProcessTracker.getStatus() == ProcessTracker.ProcessStatus.C_E) {
+            loggingService.logProcess(this.currentProcessTracker, ProcessLogging.LogLevel.ERROR, "The crawling process is running at the moment.");
+            return;
         }
+        Timestamp now = new Timestamp(System.currentTimeMillis());
+        if (sameDate(now, this.currentProcessTracker.getStartTime()) && this.currentProcessTracker.getStatus() == ProcessTracker.ProcessStatus.C_SE) {
+            loggingService.logProcess(this.currentProcessTracker, ProcessLogging.LogLevel.ERROR, "The crawling has been done for the day.");
+            return;
+        }
+
+        this.currentProcessTracker.setStatus(ProcessTracker.ProcessStatus.C_E);
+        this.currentProcessTracker.setStartTime(new Timestamp(System.currentTimeMillis()));
+        this.processTrackerRepository.save(this.currentProcessTracker);
+
+        loggingService.logProcess(this.currentProcessTracker, ProcessLogging.LogLevel.INFO, "Getting all data source config to crawl.");
+        List<DataSourceConfig> configs = this.dataSourceConfigRepository.findAll();
+
+        // Iterate and work on them
+        for (DataSourceConfig config : configs) {
+            loggingService.logProcess(this.currentProcessTracker, ProcessLogging.LogLevel.INFO, "DataSource: " + config.toString());
+        }
+
+        this.currentProcessTracker.setStatus(ProcessTracker.ProcessStatus.C_SE);
+        this.currentProcessTracker.setEndTime(new Timestamp(System.currentTimeMillis()));
+        this.processTrackerRepository.save(this.currentProcessTracker);
     }
 
 

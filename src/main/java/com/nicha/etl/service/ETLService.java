@@ -23,9 +23,8 @@ public class ETLService {
     public void runETLProcess() {
         try {
             // Bắt đầu quy trình ETL
-
             // 1. Crawl Data
-            crawlService.crawlDataAndSaveToStaging();
+            crawlService.crawlDataSourcesAndSaveToStaging();
 
             // 2. Clean Data
             cleanService.cleanData();
@@ -34,10 +33,10 @@ public class ETLService {
             loadService.loadDataToWarehouse();
 
             // Kết thúc quá trình ETL
-            loggingService.logProcess("ETL Process", "ETL process completed successfully", "SUCCESS");
+//            loggingService.logProcess("ETL Process", "ETL process completed successfully", "SUCCESS");
 
         } catch (Exception e) {
-            loggingService.logProcess("ETL Process", "ETL process failed: " + e.getMessage(), "ERROR");
+//            loggingService.logProcess("ETL Process", "ETL process failed: " + e.getMessage(), "ERROR");
         }
     }
 }

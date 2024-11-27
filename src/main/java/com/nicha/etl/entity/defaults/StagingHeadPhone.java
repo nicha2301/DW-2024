@@ -1,19 +1,19 @@
-package com.nicha.etl.entity;
+package com.nicha.etl.entity.defaults;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
-import java.util.Date;
 
 @Entity
-@Table(name = "warehouse_records")
+@Table(name = "staging_head_phone")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Product {
+public class StagingHeadPhone {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -24,7 +24,7 @@ public class Product {
     private String name;
     private String brand;
     private String type;
-    private BigDecimal price;
+    private String price;
 
     @Column(name = "warranty_info")
     private String warrantyInfo;
@@ -43,18 +43,9 @@ public class Product {
     private String weight;
     private String compatibility;
 
-    @Column(name = "created_at", updatable = false)
-    private Date createdAt;
-
-    private boolean isDelete;
-
-    @Column(name = "date_delete")
-    private Date dateDelete;
-
-    @Column(name = "date_insert")
-    private Timestamp dateInsert;
-
-    @Column(name = "expired_date")
-    private Date expiredDate;
+    @Column(name = "created_at")
+    private String createdAt;
 
 }
+
+

@@ -1,4 +1,4 @@
-package com.nicha.etl.entity;
+package com.nicha.etl.entity.defaults;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

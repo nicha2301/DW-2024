@@ -1,4 +1,4 @@
-package com.nicha.etl.entity;
+package com.nicha.etl.entity.defaults;
 
 import jakarta.persistence.*;
 import lombok.Data;
@@ -7,7 +7,7 @@ import java.sql.Timestamp;
 
 @Data
 @Entity
-@Table(name = "etl_logs")
+@Table( name = "etl_logs")
 public class EtlLog {
 
     @Id

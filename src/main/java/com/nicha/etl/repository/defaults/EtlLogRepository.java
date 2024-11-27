@@ -1,6 +1,6 @@
-package com.nicha.etl.repository;
+package com.nicha.etl.repository.defaults;
 
-import com.nicha.etl.entity.EtlLog;
+import com.nicha.etl.entity.defaults.EtlLog;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface EtlLogRepository extends JpaRepository<EtlLog, Long> {
