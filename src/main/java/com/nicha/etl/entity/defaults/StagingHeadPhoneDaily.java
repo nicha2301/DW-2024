@@ -27,24 +27,17 @@ public class StagingHeadPhoneDaily {
     private String brand;
     private String type;
     private BigDecimal price;
-
     @Column(name = "warranty_info")
     private String warrantyInfo;
-
     private String feature;
-
     @Column(name = "voice_control")
     private String voiceControl;
-
     private String microphone;
-
     @Column(name = "battery_life")
     private String batteryLife;
-
     private String dimensions;
     private String weight;
     private String compatibility;
-
     @Column(name = "created_at", updatable = false)
     private Date createdAt;
 }

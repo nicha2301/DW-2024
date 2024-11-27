@@ -47,6 +47,8 @@ public class PersistenceConfigDBAutoConfiguration {
         em.setJpaVendorAdapter(vendorAdapter);
         HashMap<String, Object> properties = new HashMap<>();
         properties.put("hibernate.hbm2ddl.auto", env.getProperty("spring.jpa.hibernate.ddl-auto"));
+//        properties.put("logging.level.org.hibernate.SQL", "DEBUG");
+//        properties.put("logging.level.org.hibernate.type.descriptor.sql.BasicBinder", "TRACE");
         em.setJpaPropertyMap(properties);
 
         return em;

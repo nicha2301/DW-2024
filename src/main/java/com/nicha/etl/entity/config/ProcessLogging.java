@@ -2,13 +2,17 @@ package com.nicha.etl.entity.config;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.sql.Date;
 import java.sql.Timestamp;
 
 @Data
 @Entity
-@Table(schema = "control_db", name = "logs")
+@Table(name = "logs")
+@SQLDelete(sql = "UPDATE config_db.logs SET deleted = 1 WHERE log_id = ?")
+@SQLRestriction("deleted = 0")
 public class ProcessLogging {
 
     public enum LogLevel {
@@ -39,4 +43,6 @@ public class ProcessLogging {
 
     @Column(name = "log_date")
     private Date date;
+
+    private boolean deleted;
 }
