@@ -1,11 +1,15 @@
 package com.nicha.etl.entity.config;
 
 import jakarta.persistence.*;
+import jakarta.persistence.Table;
 import lombok.Data;
+import org.hibernate.annotations.*;
 
 @Data
 @Entity
-@Table(schema = "control_db", name = "ds_config")
+@Table(name = "ds_config")
+@SQLDelete(sql = "UPDATE config_db.ds_config SET deleted = 1 WHERE ds_id = ?")
+@SQLRestriction("deleted = 0")
 public class DataSourceConfig {
 
     @Id
@@ -36,5 +40,7 @@ public class DataSourceConfig {
 
     @Column(name = "fields_warehouse")
     private String warehouseFields;
+
+    private boolean deleted;
 
 }

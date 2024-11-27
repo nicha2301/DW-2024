@@ -1,37 +1,48 @@
 package com.nicha.etl.service;
 
-import com.nicha.etl.entity.Product;
-import com.nicha.etl.entity.StagingHeadPhoneDaily;
-import com.nicha.etl.repository.ProductRepository;
-import com.nicha.etl.repository.StagingHeadPhoneDailyRepository;
+import com.nicha.etl.entity.config.ProcessLogging;
+import com.nicha.etl.entity.config.ProcessTracker;
+import com.nicha.etl.repository.config.ProcessTrackerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 
 @Service
 public class LoadService {
 
     private final LoggingService loggingService;
-    private final ProductRepository productRepository;
-    private final StagingHeadPhoneDailyRepository stagingHeadPhoneDailyRepository;
     private final JdbcTemplate jdbcTemplate;
+
+    private final ProcessTrackerRepository processTrackerRepository;
+    private ProcessTracker currentProcessTracker;
 
     @Autowired
     public LoadService(LoggingService loggingService,
-                       ProductRepository productRepository,
-                       StagingHeadPhoneDailyRepository stagingHeadPhoneDailyRepository, JdbcTemplate jdbcTemplate) {
+                       ProcessTrackerRepository processTrackerRepository,
+                       JdbcTemplate jdbcTemplate) {
         this.loggingService = loggingService;
-        this.productRepository = productRepository;
-        this.stagingHeadPhoneDailyRepository = stagingHeadPhoneDailyRepository;
         this.jdbcTemplate = jdbcTemplate;
+        this.processTrackerRepository = processTrackerRepository;
+        this.currentProcessTracker = this.processTrackerRepository.findByProcessName("Load Data");
+        if (this.currentProcessTracker == null) {
+            this.currentProcessTracker = new ProcessTracker();
+            this.currentProcessTracker.setProcessName("Load Data");
+            this.currentProcessTracker.setStatus(ProcessTracker.ProcessStatus.W_RI);
+            this.processTrackerRepository.save(this.currentProcessTracker);
+        }
     }
 
     public void loadDataToWarehouse() {
-        loggingService.logProcess("Load Data", "Starting data loading to warehouse", "IN_PROGRESS");
+        loggingService.logProcess(this.currentProcessTracker, ProcessLogging.LogLevel.INFO, "Starting data loading to warehouse");
+
+        if (this.currentProcessTracker.getStatus() == ProcessTracker.ProcessStatus.W_I) {
+            loggingService.logProcess(this.currentProcessTracker, ProcessLogging.LogLevel.ERROR, "The crawling process is running at the moment.");
+            return;
+        }
+        if (this.currentProcessTracker.lastStartedToday() && this.currentProcessTracker.getStatus() == ProcessTracker.ProcessStatus.W_SI) {
+            loggingService.logProcess(this.currentProcessTracker, ProcessLogging.LogLevel.ERROR, "The crawling has been done for the day.");
+            return;
+        }
 
         try {
 //            1. Kiểm tra xem dữ liệu khi insert vào dw có hoàn toàn mới hay không. Nếu có -> insert
@@ -39,10 +50,10 @@ public class LoadService {
 //            B2: Insert dòng dữ liệu có thay đổi vào dw
             jdbcTemplate.execute("CALL load_data_to_warehouse()");
 
-            loggingService.logProcess("Load Data", "Successfully loaded data to warehouse", "SUCCESS");
+            loggingService.logProcess(this.currentProcessTracker, ProcessLogging.LogLevel.INFO, "Successfully loaded data to warehouse");
 
         } catch (Exception e) {
-            loggingService.logProcess("Load Data", "Error loading data to warehouse: " + e.getMessage(), "ERROR");
+            loggingService.logProcess(this.currentProcessTracker, ProcessLogging.LogLevel.ERROR, "Error loading data to warehouse: " + e.getMessage());
         }
     }
 }

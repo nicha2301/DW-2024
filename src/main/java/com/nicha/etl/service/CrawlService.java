@@ -6,6 +6,7 @@ import com.nicha.etl.entity.config.ProcessTracker;
 import com.nicha.etl.entity.defaults.StagingHeadPhone;
 import com.nicha.etl.repository.config.DataSourceConfigRepository;
 import com.nicha.etl.repository.config.ProcessTrackerRepository;
+import com.nicha.etl.repository.defaults.ProductRepository;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +15,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.sql.Timestamp;
-import java.util.Calendar;
 import java.util.List;
 
 @Service
@@ -23,10 +23,11 @@ public class CrawlService {
     private final LoggingService loggingService;
     private final ProcessTrackerRepository processTrackerRepository;
     private final DataSourceConfigRepository dataSourceConfigRepository;
+    private final ProductRepository productRepository;
     private ProcessTracker currentProcessTracker;
 
     @Autowired
-    public CrawlService(LoggingService loggingService, ProcessTrackerRepository processTrackerRepository, DataSourceConfigRepository dataSourceConfigRepository) {
+    public CrawlService(LoggingService loggingService, ProcessTrackerRepository processTrackerRepository, DataSourceConfigRepository dataSourceConfigRepository, ProductRepository productRepository) {
         this.loggingService = loggingService;
         this.dataSourceConfigRepository = dataSourceConfigRepository;
         this.processTrackerRepository = processTrackerRepository;
@@ -38,45 +39,41 @@ public class CrawlService {
             this.currentProcessTracker.setStatus(ProcessTracker.ProcessStatus.C_RE);
             this.processTrackerRepository.save(this.currentProcessTracker);
         }
+        this.productRepository = productRepository;
     }
 
-    private boolean sameDate(Timestamp timestamp1, Timestamp timestamp2) {
-        Calendar cal1 = Calendar.getInstance();
-        Calendar cal2 = Calendar.getInstance();
-        if (timestamp1 == null || timestamp2 == null)
-            return timestamp1 == timestamp2;
-        cal1.setTime(timestamp1);
-        cal2.setTime(timestamp2);
-        return cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR) &&
-                cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR);
-    }
-
-    public void crawlDataSourcesAndSaveToStaging() {
+    public void crawlDataSourcesAndSaveToStaging() throws Exception {
+        // Bước 1: Kiểm tra process có đang chạy không?
         if (this.currentProcessTracker.getStatus() == ProcessTracker.ProcessStatus.C_E) {
-            loggingService.logProcess(this.currentProcessTracker, ProcessLogging.LogLevel.ERROR, "The crawling process is running at the moment.");
-            return;
+            this.loggingService.logProcess(this.currentProcessTracker, ProcessLogging.LogLevel.ERROR, "Có tiến trình khác đang chạy cùng service này, hủy.");
+            throw new RuntimeException("Có tiến trình khác đang chạy cùng service này");
         }
-        Timestamp now = new Timestamp(System.currentTimeMillis());
-        if (sameDate(now, this.currentProcessTracker.getStartTime()) && this.currentProcessTracker.getStatus() == ProcessTracker.ProcessStatus.C_SE) {
-            loggingService.logProcess(this.currentProcessTracker, ProcessLogging.LogLevel.ERROR, "The crawling has been done for the day.");
-            return;
+        // Bước 2: Kiểm tra process đã chạy thành công hôm nay chưa
+        if (this.currentProcessTracker.lastStartedToday() && this.currentProcessTracker.getStatus() == ProcessTracker.ProcessStatus.C_SE) {
+            this.loggingService.logProcess(this.currentProcessTracker, ProcessLogging.LogLevel.ERROR, "Tiến trình này đã chạy thành công hôm nay rồi, hủy.");
+            throw new RuntimeException("Tiến trình này đã chạy thành công hôm nay rồi, hủy.");
         }
 
+        // Bước 3: Đổi trạng thái process sang Crawl + Log process bắt đầu
+        Timestamp start = new Timestamp(System.currentTimeMillis());
         this.currentProcessTracker.setStatus(ProcessTracker.ProcessStatus.C_E);
-        this.currentProcessTracker.setStartTime(new Timestamp(System.currentTimeMillis()));
+        this.currentProcessTracker.setStartTime(start);
         this.processTrackerRepository.save(this.currentProcessTracker);
 
-        loggingService.logProcess(this.currentProcessTracker, ProcessLogging.LogLevel.INFO, "Getting all data source config to crawl.");
+        //Bước 4: Làm hành động nào đó
+        this.loggingService.logProcess(this.currentProcessTracker, ProcessLogging.LogLevel.INFO, "Getting all data source config to crawl.");
         List<DataSourceConfig> configs = this.dataSourceConfigRepository.findAll();
 
-        // Iterate and work on them
+        // Iterate each config and work on them
         for (DataSourceConfig config : configs) {
-            loggingService.logProcess(this.currentProcessTracker, ProcessLogging.LogLevel.INFO, "DataSource: " + config.toString());
+            this.loggingService.logProcess(this.currentProcessTracker, ProcessLogging.LogLevel.INFO, "DataSource: " + config.toString(), start, new Timestamp(System.currentTimeMillis()));
         }
 
+        // Bước 5: Khi hoàn thiện, đổi trạng thái thành Success, hoặc Failure và log kết thúc
         this.currentProcessTracker.setStatus(ProcessTracker.ProcessStatus.C_SE);
         this.currentProcessTracker.setEndTime(new Timestamp(System.currentTimeMillis()));
         this.processTrackerRepository.save(this.currentProcessTracker);
+        this.loggingService.logProcess(this.currentProcessTracker, ProcessLogging.LogLevel.INFO, "Getting all data source config to crawl.", start, new Timestamp(System.currentTimeMillis()));
     }
 
 
