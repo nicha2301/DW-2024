@@ -66,30 +66,12 @@ public class CleanService {
 
     private StagingHeadPhoneDaily cleanAndTransform(StagingHeadPhone record) {
         try {
-            // Kiểm tra điều kiện dữ liệu hợp lệ
-//            if (record.getName() == null || record.getName().isEmpty() ||
-//                    record.getPrice() == null || record.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
-//                return null; // Bỏ qua record không hợp lệ
-//            }
-            if(!isValidRecord(record)){
-                return null;
+             /*Kiểm tra điều kiện dữ liệu hợp lệ*/
+            if (record.getName() == null || record.getName().isEmpty() ||
+                    record.getPrice() == null || record.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
+                return null; // Bỏ qua record không hợp lệ
             }
             StagingHeadPhoneDaily cleanedRecord = new StagingHeadPhoneDaily();
-
-            cleanedRecord.setProductId(record.getProductId());
-            cleanedRecord.setName(record.getName().trim());
-            cleanedRecord.setBrand(record.getBrand() != null ? record.getBrand().trim() : "Unknown");
-            cleanedRecord.setType(record.getType() != null ? record.getType().trim() : "Unknown");
-            cleanedRecord.setPrice(parsePrice(record.getPrice()));
-            cleanedRecord.setWarrantyInfo(cleanString(record.getWarrantyInfo()));
-            cleanedRecord.setFeature(cleanString(record.getFeature()));
-            cleanedRecord.setVoiceControl(cleanString(record.getVoiceControl()));
-            cleanedRecord.setMicrophone(cleanString(record.getMicrophone()));
-            cleanedRecord.setBatteryLife(cleanString(record.getBatteryLife()));
-            cleanedRecord.setDimensions(cleanString(record.getDimensions()));
-            cleanedRecord.setWeight(cleanString(record.getWeight()));
-            cleanedRecord.setCompatibility(cleanString(record.getCompatibility()));
-            cleanedRecord.setCreatedAt(parseDate(record.getCreatedAt()));
             // Cast từ StagingHeadPhone sang StagingHeadPhoneDaily
             // Xoa cac the? html
             // ...
@@ -102,35 +84,5 @@ public class CleanService {
             loggingService.logProcess("Clean Data", "Error processing record: " + e.getMessage(), "ERROR");
             return null;
         }
-    }
-    private boolean isValidRecord(StagingHeadPhone record) {
-//        return record != null && StringUtils.hasText(record.getName()) && record.getPrice() != null
-//                && record.getPrice().compareTo(String.valueOf(BigDecimal.ZERO)) > 0;
-        return record != null && StringUtils.hasText(record.getName()) &&
-                StringUtils.hasText(record.getPrice()) && parsePrice(record.getPrice()) != null;
-    }
-    private BigDecimal parsePrice(String price) {
-        try {
-            return new BigDecimal(price.trim());
-        }catch (NumberFormatException e) {
-            return null;
-        }
-    }
-    private Date parseDate(String dateStr) {
-        if(!StringUtils.hasText(dateStr)) {
-            return new Date();
-        }
-        try {
-            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            return formatter.parse(dateStr.trim());
-        }catch (ParseException e) {
-            return new Date();
-        }
-    }
-    private String cleanString(String input){
-        if(input == null || input.isEmpty()){
-            return input;
-        }
-        return input.replaceAll("<[^>]*>", "").trim();
     }
 }
