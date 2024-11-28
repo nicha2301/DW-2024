@@ -7,6 +7,9 @@ import com.nicha.etl.repository.ProductRepository;
 import com.nicha.etl.repository.StagingHeadPhoneDailyRepository;
 import com.nicha.etl.repository.StagingHeadPhoneRepository;
 import io.netty.util.internal.StringUtil;
+import com.nicha.etl.entity.config.ProcessTracker;
+import com.nicha.etl.repository.defaults.StagingHeadPhoneDailyRepository;
+import com.nicha.etl.repository.defaults.StagingHeadPhoneRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -19,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.sql.Timestamp;
 
 @Service
 public class CleanService {
@@ -39,8 +43,8 @@ public class CleanService {
     }
 
     public void cleanData() {
-        loggingService.logProcess("Clean Data", "Starting data cleaning from staging table", "IN_PROGRESS");
-
+        Timestamp start = new Timestamp(System.currentTimeMillis());
+//        loggingService.logProcess("Clean Data", ProcessTracker.LogStatus.TRACING, "Starting data cleaning from staging table", start, start);
         try {
             // Lấy dữ liệu từ bảng staging
             List<StagingHeadPhone> rawData = stagingHeadPhoneRepository.findAll();

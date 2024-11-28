@@ -1,4 +1,4 @@
-package com.nicha.etl.entity;
+package com.nicha.etl.entity.defaults;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 import java.util.Date;
 
 @Entity
-@Table(name = "warehouse_records")
+@Table(name = "head_phone")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
