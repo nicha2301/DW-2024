@@ -42,47 +42,10 @@ public class CleanService {
         loggingService.logProcess("Clean Data", "Starting data cleaning from staging table", "IN_PROGRESS");
 
         try {
-            // Lấy dữ liệu từ bảng staging
-            List<StagingHeadPhone> rawData = stagingHeadPhoneRepository.findAll();
-            List<StagingHeadPhoneDaily> cleanedData = new ArrayList<>();
-
-            for (StagingHeadPhone record : rawData) {
-                // Làm sạch và chuyển đổi dữ liệu
-                StagingHeadPhoneDaily transformedRecord = cleanAndTransform(record);
-
-                if (transformedRecord != null) {
-                    cleanedData.add(transformedRecord);
-                }
-            }
-
-            stagingHeadPhoneDailyRepository.saveAll(cleanedData);
-
+            jdbcTemplate.execute("CALL transform_and_load_staging_data()");
             loggingService.logProcess("Clean Data", "Successfully cleaned data", "SUCCESS");
-
         } catch (Exception e) {
             loggingService.logProcess("Clean Data", "Error cleaning data: " + e.getMessage(), "ERROR");
-        }
-    }
-
-    private StagingHeadPhoneDaily cleanAndTransform(StagingHeadPhone record) {
-        try {
-             /*Kiểm tra điều kiện dữ liệu hợp lệ*/
-            if (record.getName() == null || record.getName().isEmpty() ||
-                    record.getPrice() == null || record.getPrice().compareTo(String.valueOf(BigDecimal.ZERO)) <= 0) {
-                return null; // Bỏ qua record không hợp lệ
-            }
-            StagingHeadPhoneDaily cleanedRecord = new StagingHeadPhoneDaily();
-            // Cast từ StagingHeadPhone sang StagingHeadPhoneDaily
-            // Xoa cac the? html
-            // ...
-            //todo
-            jdbcTemplate.execute("CALL transform_and_load_staging_data()");
-
-            return cleanedRecord;
-        } catch (Exception e) {
-            // Ghi log lỗi khi xử lý record
-            loggingService.logProcess("Clean Data", "Error processing record: " + e.getMessage(), "ERROR");
-            return null;
         }
     }
 }
