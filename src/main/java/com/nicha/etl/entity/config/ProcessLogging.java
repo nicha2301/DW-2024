@@ -38,7 +38,7 @@ public class ProcessLogging {
     @Enumerated(EnumType.ORDINAL)
     private LogLevel level;
 
-    @Column(name = "log_message")
+    @Column(name = "log_message", length = 1024)
     private String message;
 
     @Column(name = "log_date")

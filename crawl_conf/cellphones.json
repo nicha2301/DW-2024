@@ -1,0 +1,25 @@
+{
+  "url": "https://api.cellphones.com.vn/v2/graphql/query",
+  "method": "POST",
+  "header": {
+    "Content-Type": "application/json"
+  },
+  "body": {
+    "query": "query GetProductsByCateId {\n            products(\n                filter: {\n                    static: {\n                        categories: [\"265\"],\n                        province_id: 30,\n                        stock: {\n                            from: 0\n                        },\n                        stock_available_id: [46, 56, 152, 4164],\n                        filter_price: {\n                            from: 0,\n                            to: 13190000\n                        }\n                    },\n                    dynamic: {}\n                },\n                size: 10000,\n                sort: [{ view: desc }]\n            ) {\n                general {\n                    product_id\n                    name\n                    attributes\n                    sku\n                    doc_quyen\n                    manufacturer\n                    url_key\n                    url_path\n                    categories {\n                        categoryId\n                    }\n                    review {\n                        total_count\n                        average_rating\n                    }\n                },\n                filterable {\n                    is_installment\n                    stock_available_id\n                    company_stock_id\n                    filter {\n                        id\n                        Label\n                    }\n                    is_parent\n                    exclusive_prices\n                    price\n                    prices\n                    special_price\n                    promotion_information\n                    thumbnail\n                    promotion_pack\n                    sticker\n                    flash_sale_types\n                }\n            }\n        }"
+  },
+  "mapping": {
+    "product_id": "general.product_id",
+    "name": "general.name",
+    "brand": "general.attributes.phone_accessory_brands",
+    "type": "general.attributes.mobile_accessory_type",
+    "price": "filterable.price",
+    "warranty_info": "general.attributes.warranty_information",
+    "feature": "general.attributes.tai_nghe_tinh_nang|general.attributes.tai_nghe_nhu_cau_su_dung",
+    "voice_control": "general.attributes.tai_nghe_dieu_khien",
+    "microphone": "general.attributes.tai_nghe_micro",
+    "battery_life": "general.attributes.tai_nghe_pin|general.attributes.battery",
+    "dimensions": "general.attributes.tai_nghe_kich_thuoc_driver|general.attributes.tai_nghe_do_dai_day|general.attributes.dimensions",
+    "weight": "general.attributes.product_weight|general.attributes.trong_luong_tai_nghe",
+    "compatibility": "general.attributes.tai_nghe_tuong_thich"
+  }
+}
