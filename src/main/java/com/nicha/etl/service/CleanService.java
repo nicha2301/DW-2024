@@ -8,6 +8,7 @@ import com.nicha.etl.repository.StagingHeadPhoneDailyRepository;
 import com.nicha.etl.repository.StagingHeadPhoneRepository;
 import io.netty.util.internal.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -25,14 +26,16 @@ public class CleanService {
     private final LoggingService loggingService;
     private final StagingHeadPhoneRepository stagingHeadPhoneRepository;
     private final StagingHeadPhoneDailyRepository stagingHeadPhoneDailyRepository;
+    private final JdbcTemplate jdbcTemplate;
 
     @Autowired
     public CleanService(LoggingService loggingService,
                         StagingHeadPhoneRepository stagingHeadPhoneRepository,
-                        StagingHeadPhoneDailyRepository stagingHeadPhoneDailyRepository) {
+                        StagingHeadPhoneDailyRepository stagingHeadPhoneDailyRepository, JdbcTemplate jdbcTemplate) {
         this.loggingService = loggingService;
         this.stagingHeadPhoneRepository = stagingHeadPhoneRepository;
         this.stagingHeadPhoneDailyRepository = stagingHeadPhoneDailyRepository;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     public void cleanData() {
@@ -91,7 +94,7 @@ public class CleanService {
             // Xoa cac the? html
             // ...
             //todo
-            
+            jdbcTemplate.execute("CALL transform_and_load_staging_data()");
 
             return cleanedRecord;
         } catch (Exception e) {
