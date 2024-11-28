@@ -16,6 +16,7 @@ import java.util.Calendar;
 public class ProcessTracker {
 
     public enum ProcessStatus {
+        P_RR, P_R, P_SR, P_FR,
         C_RE, C_E, C_SE, C_FE,
         S_RI, S_I, S_SI, S_FI,
         W_RI, W_I, W_SI, W_FI

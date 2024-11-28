@@ -13,5 +13,9 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
-logging.level.org.hibernate.SQL: debug
-logging.level.org.hibernate.type.descriptor.sql.BasicBinder: trace
+
+logging:
+level:
+root: info
+#logging.level.org.hibernate.SQL: debug
+#logging.level.org.hibernate.type.descriptor.sql.BasicBinder: trace

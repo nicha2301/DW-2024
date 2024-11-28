@@ -6,6 +6,8 @@ import com.nicha.etl.repository.config.ProcessLogRepository;
 import com.nicha.etl.repository.config.ProcessTrackerRepository;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +17,7 @@ import java.sql.Timestamp;
 @Service
 public class LoggingService {
 
+    private final Logger logger = LoggerFactory.getLogger(LoggingService.class);
     @Autowired
     private ProcessLogRepository processLogRepository;
 
@@ -32,5 +35,6 @@ public class LoggingService {
         logging.setProcessEnd(endTimestamp);
         logging.setDate(new Date(System.currentTimeMillis()));
         processLogRepository.save(logging);
+        logger.info(logging.getMessage());
     }
 }
