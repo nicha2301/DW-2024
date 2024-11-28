@@ -68,7 +68,7 @@ public class CleanService {
         try {
              /*Kiểm tra điều kiện dữ liệu hợp lệ*/
             if (record.getName() == null || record.getName().isEmpty() ||
-                    record.getPrice() == null || record.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
+                    record.getPrice() == null || record.getPrice().compareTo(String.valueOf(BigDecimal.ZERO)) <= 0) {
                 return null; // Bỏ qua record không hợp lệ
             }
             StagingHeadPhoneDaily cleanedRecord = new StagingHeadPhoneDaily();
