@@ -52,7 +52,7 @@ SELECT stg.product_id
 FROM staging_head_phone_daily AS stg
          INNER JOIN head_phone AS wh
                     ON stg.product_id = wh.product_id
-WHERE (
+WHERE wh.isDelete = FALSE AND(
           stg.name <> wh.name OR
           stg.brand <> wh.brand OR
           stg.type <> wh.type OR
