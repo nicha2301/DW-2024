@@ -1,13 +1,10 @@
 package com.nicha.etl;
 
-import com.nicha.etl.service.CrawlService;
 import com.nicha.etl.service.ETLService;
-import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -16,7 +13,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 public class EtlApplication {
 
-    private Logger logger = LoggerFactory.getLogger(EtlApplication.class);
+    private final Logger logger = LoggerFactory.getLogger(EtlApplication.class);
 
     public static void main(String[] args) {
         SpringApplication.run(EtlApplication.class, args);
@@ -27,7 +24,12 @@ public class EtlApplication {
         return args -> {
             logger.info("EXECUTING : command line runner");
             // Crawl and save data
-            etlService.runETLProcess(true);
+            try {
+                etlService.run(true);
+            }
+            catch (Exception e) {
+                //e.printStackTrace(System.err);
+            }
         };
     }
 
