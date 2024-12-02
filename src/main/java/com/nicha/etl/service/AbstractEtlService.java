@@ -136,6 +136,7 @@ public abstract class AbstractEtlService {
             changeStatus(ProcessTracker.ProcessStatus.FAILED);
             String errorMsg = String.format("Error while processing %s: %s", tracker.getProcessName(), e.getMessage());
             logProcess(ProcessLogging.LogLevel.ERROR, errorMsg, start, end);
+            throw new RuntimeException(e);
         }
     }
 }

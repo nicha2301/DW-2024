@@ -24,7 +24,12 @@ public class EtlApplication {
         return args -> {
             logger.info("EXECUTING : command line runner");
             // Crawl and save data
-            etlService.run(true);
+            try {
+                etlService.run(true);
+            }
+            catch (Exception e) {
+                //e.printStackTrace(System.err);
+            }
         };
     }
 
