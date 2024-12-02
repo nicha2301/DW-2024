@@ -17,10 +17,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 @Service
 public class CrawlService extends AbstractEtlService {
@@ -32,7 +30,7 @@ public class CrawlService extends AbstractEtlService {
     protected CrawlService(LoggingService loggingService,
                            ProcessTrackerRepository trackerRepo,
                            DataSourceConfigRepository dataSourceConfigRepository) {
-        super(loggingService, trackerRepo);
+        super(loggingService, trackerRepo, "Crawl Data");
         this.dataSourceConfigRepository = dataSourceConfigRepository;
         this.httpClient = HttpClient.newBuilder().build();
         this.httpRequestBuilder = HttpRequest.newBuilder();
@@ -40,39 +38,37 @@ public class CrawlService extends AbstractEtlService {
 
     @Override
     protected void process(boolean forceRun) {
-        logProcess(ProcessLogging.LogLevel.INFO, "Getting all data source config to crawl.");
+        logProcess(ProcessLogging.LogLevel.DEBUG, "Getting all data source config to crawl.");
         List<DataSourceConfig> configs = this.dataSourceConfigRepository.findAll();
 
         for (DataSourceConfig dataSourceConfig : configs) {
-            logProcess(ProcessLogging.LogLevel.INFO, "Working with data source: " + dataSourceConfig.getName());
+            logProcess(ProcessLogging.LogLevel.DEBUG, "Working with data source: " + dataSourceConfig.getName());
             crawlAndExportCSV(dataSourceConfig);
-            logProcess(ProcessLogging.LogLevel.INFO, "Completed crawling with data source: " + dataSourceConfig.getName());
+            logProcess(ProcessLogging.LogLevel.DEBUG, "Completed crawling with data source: " + dataSourceConfig.getName());
         }
     }
 
     private void crawlAndExportCSV(DataSourceConfig config) {
         String configFileUrl = config.getCrawlConfigURL();
-        if (configFileUrl == null) {
-            logProcess(ProcessLogging.LogLevel.ERROR, String.format("Data source config file URL was null for \"%s\"", config.getName()));
-            return;
-        }
+        if (configFileUrl == null)
+            throw new RuntimeException(String.format("Data source config file URL was null for \"%s\"", config.getName()));
+
         File file = new File(configFileUrl);
-        if (!file.exists()) {
-            logProcess(ProcessLogging.LogLevel.ERROR, String.format("The config file was not found \"%s\"", config.getName()));
-            return;
-        }
+        if (!file.exists())
+            throw new RuntimeException(String.format("The config file was not found \"%s\"", config.getName()));
+
+
         String saveLocationURL = config.getCrawlSaveLocation();
-        if (saveLocationURL == null) {
-            logProcess(ProcessLogging.LogLevel.ERROR, String.format("Data source save location URL was null for \"%s\"", config.getName()));
-            return;
-        }
+        if (saveLocationURL == null)
+            throw new RuntimeException(String.format("Data source save location URL was null for \"%s\"", config.getName()));
+
         try {
             // Read config json
             JSONObject configJson = new JSONObject(new JSONTokener(new FileReader(configFileUrl)));
             // Try fetching the source
             JSONObject object = fetchDataHttps(configJson);
             // Get the products arrays
-            JSONArray array = object.getJSONObject("data").getJSONArray("products");
+            JSONArray array = getJSONRecursiveArray(object, configJson.getString("location"));
             // Split the fields from config
             String[] fields = config.getStagingFields().split(",");
             // Get config mappings for data
@@ -89,7 +85,12 @@ public class CrawlService extends AbstractEtlService {
                 }
                 entries.add(uhh);
             }
-            exportToCSV(entries, config.getCrawlSaveLocation());
+
+            Calendar c1 = Calendar.getInstance();
+            c1.setTime(tracker.getStartTime());
+            SimpleDateFormat dateFormat = new SimpleDateFormat("ddMMyy_hhmm");
+            saveLocationURL = saveLocationURL.replace("ddmmyy_hhmm", dateFormat.format(c1.getTime()));
+            exportToCSV(entries, saveLocationURL);
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -105,7 +106,7 @@ public class CrawlService extends AbstractEtlService {
 
         HttpRequest.Builder builder = httpRequestBuilder;
         builder = builder.uri(URI.create(url));
-        for (String headerProp: header.keySet())
+        for (String headerProp : header.keySet())
             builder = builder.header(headerProp, header.getString(headerProp));
         builder = builder.method(method, HttpRequest.BodyPublishers.ofString(body.toString()));
 
@@ -123,7 +124,7 @@ public class CrawlService extends AbstractEtlService {
         for (int i = 0; i < products.length(); i++) {
             JSONObject productObj = products.getJSONObject(i);
             Map<String, String> productMap = new HashMap<>();
-            for (String field: fields) {
+            for (String field : fields) {
                 productMap.put(field, getJSONCustom(productObj, keyMap.getOrDefault(field, "").toString()));
             }
             productList.add(productMap);
@@ -136,14 +137,14 @@ public class CrawlService extends AbstractEtlService {
         String[] split = path.split("\\|");
         String result;
         for (String s : split) {
-            result = getJSONRecursive(productObj, s);
+            result = getJSONRecursiveString(productObj, s);
             if (result != null)
                 return result;
         }
         return null;
     }
 
-    private String getJSONRecursive(JSONObject productJson, String path) {
+    private String getJSONRecursiveString(JSONObject productJson, String path) {
         String[] split = path.split("\\.");
         if (split.length == 0)
             return null;
@@ -151,7 +152,18 @@ public class CrawlService extends AbstractEtlService {
             return productJson.optString(path, null);
         }
         JSONObject jsonObject = productJson.getJSONObject(split[0]);
-        return getJSONRecursive(jsonObject, path.substring(split[0].length() + 1));
+        return getJSONRecursiveString(jsonObject, path.substring(split[0].length() + 1));
+    }
+
+    private JSONArray getJSONRecursiveArray(JSONObject productJson, String path) {
+        String[] split = path.split("\\.");
+        if (split.length == 0)
+            return null;
+        if (split.length == 1) {
+            return productJson.optJSONArray(path, null);
+        }
+        JSONObject jsonObject = productJson.getJSONObject(split[0]);
+        return getJSONRecursiveArray(jsonObject, path.substring(split[0].length() + 1));
     }
 
     private void exportToCSV(List<String[]> data, String exportURL) throws IOException {

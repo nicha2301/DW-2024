@@ -37,6 +37,12 @@ public class ProcessTracker {
     @Column(name = "process_last_end_time")
     private Timestamp endTime;
 
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "process_tracker", referencedColumnName = "process_id")
+    private ProcessTracker requiredProcess;
+
+    private boolean deleted;
+
     public boolean lastStartedToday() {
         if (startTime == null) {
             return false;
@@ -48,7 +54,5 @@ public class ProcessTracker {
         return cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR) &&
                 cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR);
     }
-
-    private boolean deleted;
 
 }
