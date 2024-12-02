@@ -19,7 +19,7 @@ public class ETLService extends AbstractEtlService {
                          ImportToStagingService importToStagingService,
                          CleanService cleanService,
                          LoadService loadService) {
-        super(loggingService, trackerRepo);
+        super(loggingService, trackerRepo, "Main");
         this.crawlService = crawlService;
         this.importToStagingService = importToStagingService;
         this.cleanService = cleanService;

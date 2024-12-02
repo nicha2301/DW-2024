@@ -1,5 +1,6 @@
 package com.nicha.etl.service;
 
+import com.nicha.etl.entity.config.ProcessTracker;
 import com.nicha.etl.repository.config.ProcessTrackerRepository;
 import com.nicha.etl.repository.defaults.StagingHeadPhoneDailyRepository;
 import com.nicha.etl.repository.defaults.StagingHeadPhoneRepository;
@@ -13,11 +14,17 @@ public class CleanService extends AbstractEtlService {
     private final StagingHeadPhoneDailyRepository stagingHeadPhoneDailyRepository;
     private final JdbcTemplate jdbcTemplate;
 
-    protected CleanService(LoggingService loggingService, ProcessTrackerRepository trackerRepo, StagingHeadPhoneRepository stagingHeadPhoneRepository, StagingHeadPhoneDailyRepository stagingHeadPhoneDailyRepository, JdbcTemplate jdbcTemplate) {
-        super(loggingService, trackerRepo);
+    protected CleanService(LoggingService loggingService,
+                           ProcessTrackerRepository trackerRepo,
+                           StagingHeadPhoneRepository stagingHeadPhoneRepository,
+                           StagingHeadPhoneDailyRepository stagingHeadPhoneDailyRepository, JdbcTemplate jdbcTemplate) {
+        super(loggingService, trackerRepo, "Clean Data");
         this.stagingHeadPhoneRepository = stagingHeadPhoneRepository;
         this.stagingHeadPhoneDailyRepository = stagingHeadPhoneDailyRepository;
         this.jdbcTemplate = jdbcTemplate;
+        ProcessTracker pt = this.trackerRepo.findByProcessName("Import to Staging");
+        this.tracker.setRequiredProcess(pt);
+        this.trackerRepo.save(this.tracker);
     }
 
     @Override

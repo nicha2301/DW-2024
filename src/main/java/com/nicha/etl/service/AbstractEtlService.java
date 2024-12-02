@@ -5,7 +5,7 @@ import com.nicha.etl.entity.config.ProcessTracker;
 import com.nicha.etl.repository.config.ProcessTrackerRepository;
 
 import java.sql.Timestamp;
-import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 
 /**
  * This class purpose is to hide process tracker and steps done
@@ -14,19 +14,23 @@ import java.text.DateFormat;
 public abstract class AbstractEtlService {
 
     private final LoggingService loggingService;
-    private final ProcessTrackerRepository trackerRepo;
-    private ProcessTracker tracker;
+    protected final ProcessTrackerRepository trackerRepo;
+    protected ProcessTracker tracker;
+    protected String processName;
 
-    protected AbstractEtlService(LoggingService loggingService, ProcessTrackerRepository trackerRepo) {
+    protected AbstractEtlService(LoggingService loggingService,
+                                 ProcessTrackerRepository trackerRepo,
+                                 String processName) {
         this.loggingService = loggingService;
         this.trackerRepo = trackerRepo;
+        this.processName = processName;
 
         // If the tracker is not exists in database, create one and save it in database
         // Trust me, this tracker will be used throughout this script
-        this.tracker = this.trackerRepo.findByProcessName(getClass().getName());
+        this.tracker = this.trackerRepo.findByProcessName(this.processName);
         if (this.tracker == null) {
             this.tracker = new ProcessTracker();
-            this.tracker.setProcessName(getClass().getName());
+            this.tracker.setProcessName(this.processName);
             this.tracker.setStatus(ProcessTracker.ProcessStatus.READY);
             this.trackerRepo.save(tracker);
         }
@@ -76,25 +80,6 @@ public abstract class AbstractEtlService {
     }
 
     /**
-     * Check if the run request is allowed
-     * @param forced boolean, if true, it will ignore the prevention from successful run today
-     */
-    private boolean checkRunnableToday(boolean forced) {
-        if (tracker == null)
-            return false;
-        if (tracker.getStatus() == ProcessTracker.ProcessStatus.IN_PROGRESS) {
-            this.loggingService.logProcess(tracker, ProcessLogging.LogLevel.ERROR, "Có tiến trình khác đang chạy cùng service này, hủy.");
-            return false;
-        }
-        // Bước 2: Kiểm tra process đã chạy thành công hôm nay chưa
-        if (!forced && tracker.lastStartedToday() && tracker.getStatus() == ProcessTracker.ProcessStatus.SUCCESS) {
-            this.loggingService.logProcess(tracker, ProcessLogging.LogLevel.ERROR, "Tiến trình này đã chạy thành công hôm nay rồi, hủy.");
-            return false;
-        }
-        return true;
-    }
-
-    /**
      * The main method it will process when running the {@link #run(boolean) run(forceRun)} method
      * Depend on how the method was implemented, forceRun can be ignored
      * @apiNote Run this method instead of {@link #run(boolean) run(forceRun)} method
@@ -111,30 +96,38 @@ public abstract class AbstractEtlService {
      */
     public void run(boolean forceRun) {
         // Pre-condition
-        boolean ready = checkRunnableToday(forceRun);
-        if (!ready) {
-            return;
-        }
+        if (tracker.getStatus() == ProcessTracker.ProcessStatus.IN_PROGRESS)
+            throw new RuntimeException(String.format("Process \"%s\" đang chạy bởi ai đó khác, hủy.", processName));
+
+        // Bước 2: Kiểm tra process đã chạy thành công hôm nay chưa
+        if (!forceRun && tracker.lastStartedToday() && tracker.getStatus() == ProcessTracker.ProcessStatus.SUCCESS)
+            throw new RuntimeException(String.format("Tiến trình \"%s\" đã chạy thành công hôm nay rồi, hủy.", processName));
+
+        ProcessTracker pt = tracker.getRequiredProcess();
+        if (pt != null && pt.getStatus() != ProcessTracker.ProcessStatus.SUCCESS)
+            throw new RuntimeException(String.format("Process tiên quyết \"%s\" chưa chạy thành công, hủy.", pt.getProcessName()));
+
         // Set state to IN-PROGRESS and log
         changeStatus(ProcessTracker.ProcessStatus.IN_PROGRESS);
         Timestamp start = new Timestamp(System.currentTimeMillis());
+        SimpleDateFormat format = new SimpleDateFormat("mm:ss.SSS");
         try {
             // Log its starting point
-            String startingMsg = String.format("Starting process %s", tracker.getProcessName());
+            String startingMsg = String.format("Starting process \"%s\"", processName);
             logProcess(ProcessLogging.LogLevel.INFO, startingMsg, start, start);
             // Do process in this only method
             process(forceRun);
             // Set state to SUCCESS and log end because it was finished without exception
             Timestamp end = new Timestamp(System.currentTimeMillis());
             changeStatus(ProcessTracker.ProcessStatus.SUCCESS);
-            String completedMsg = String.format("Completed process %s in: %s", tracker.getProcessName(), DateFormat.getTimeInstance().format(end.getNanos() - start.getNanos()));
+            String completedMsg = String.format("Completed process \"%s\" in: %ss", processName, format.format(end.getTime() - start.getTime()));
             logProcess(ProcessLogging.LogLevel.INFO, completedMsg, start, end);
         }
         catch (Exception e) {
             // When exception is thrown, set state to FAILURE and log it
             Timestamp end = new Timestamp(System.currentTimeMillis());
             changeStatus(ProcessTracker.ProcessStatus.FAILED);
-            String errorMsg = String.format("Error while processing %s: %s", tracker.getProcessName(), e.getMessage());
+            String errorMsg = String.format("Error while processing \"%s\": %s", processName, e.getMessage());
             logProcess(ProcessLogging.LogLevel.ERROR, errorMsg, start, end);
             throw new RuntimeException(e);
         }
