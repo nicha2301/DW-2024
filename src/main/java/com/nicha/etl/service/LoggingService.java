@@ -3,9 +3,6 @@ package com.nicha.etl.service;
 import com.nicha.etl.entity.config.ProcessLogging;
 import com.nicha.etl.entity.config.ProcessTracker;
 import com.nicha.etl.repository.config.ProcessLogRepository;
-import com.nicha.etl.repository.config.ProcessTrackerRepository;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +32,6 @@ public class LoggingService {
         logging.setProcessEnd(endTimestamp);
         logging.setDate(new Date(System.currentTimeMillis()));
         processLogRepository.save(logging);
-        logger.info(logging.getMessage());
+        logger.info(status.name() + ": " + logging.getMessage());
     }
 }

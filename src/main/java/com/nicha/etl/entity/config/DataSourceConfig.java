@@ -29,17 +29,11 @@ public class DataSourceConfig {
     @Column(name = "tbl_staging")
     private String stagingTableName;
 
-    @Column(name = "tbl_staging_daily")
-    private String dailyStagingTableName;
-
-    @Column(name = "tbl_warehouse_daily")
-    private String dailyWarehouseTableName;
-
     @Column(name = "fields_staging")
     private String stagingFields;
 
-    @Column(name = "fields_warehouse")
-    private String warehouseFields;
+    @Column(name = "fields_staging_daily")
+    private String stagingDailyFields;
 
     private boolean deleted;
 
