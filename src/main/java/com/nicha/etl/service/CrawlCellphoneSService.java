@@ -21,16 +21,16 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Service
-public class CrawlService extends AbstractEtlService {
+public class CrawlCellphoneSService extends AbstractEtlService {
 
     private final DataSourceConfigRepository dataSourceConfigRepository;
     private final HttpClient httpClient;
     private final HttpRequest.Builder httpRequestBuilder;
 
-    protected CrawlService(LoggingService loggingService,
-                           ProcessTrackerRepository trackerRepo,
-                           DataSourceConfigRepository dataSourceConfigRepository) {
-        super(loggingService, trackerRepo, "Crawl Data");
+    protected CrawlCellphoneSService(LoggingService loggingService,
+                                     ProcessTrackerRepository trackerRepo,
+                                     DataSourceConfigRepository dataSourceConfigRepository) {
+        super(loggingService, trackerRepo, "Crawl CellphoneS Data");
         this.dataSourceConfigRepository = dataSourceConfigRepository;
         this.httpClient = HttpClient.newBuilder().build();
         this.httpRequestBuilder = HttpRequest.newBuilder();
@@ -39,13 +39,11 @@ public class CrawlService extends AbstractEtlService {
     @Override
     protected void process(boolean forceRun) {
         logProcess(ProcessLogging.LogLevel.DEBUG, "Getting all data source config to crawl.");
-        List<DataSourceConfig> configs = this.dataSourceConfigRepository.findAll();
+        DataSourceConfig config = this.dataSourceConfigRepository.findByName("CellphoneS");
 
-        for (DataSourceConfig dataSourceConfig : configs) {
-            logProcess(ProcessLogging.LogLevel.DEBUG, "Working with data source: " + dataSourceConfig.getName());
-            crawlAndExportCSV(dataSourceConfig);
-            logProcess(ProcessLogging.LogLevel.DEBUG, "Completed crawling with data source: " + dataSourceConfig.getName());
-        }
+        logProcess(ProcessLogging.LogLevel.DEBUG, "Working with data source: " + config.getName());
+        crawlAndExportCSV(config);
+        logProcess(ProcessLogging.LogLevel.DEBUG, "Completed crawling with data source: " + config.getName());
     }
 
     private void crawlAndExportCSV(DataSourceConfig config) {
@@ -56,7 +54,6 @@ public class CrawlService extends AbstractEtlService {
         File file = new File(configFileUrl);
         if (!file.exists())
             throw new RuntimeException(String.format("The config file was not found \"%s\"", config.getName()));
-
 
         String saveLocationURL = config.getCrawlSaveLocation();
         if (saveLocationURL == null)
@@ -70,7 +67,7 @@ public class CrawlService extends AbstractEtlService {
             // Get the products arrays
             JSONArray array = getJSONRecursiveArray(object, configJson.getString("location"));
             // Split the fields from config
-            String[] fields = config.getStagingFields().split(",");
+            String[] fields = "product_id,name,brand,type,price,warranty_info,feature,voice_control,microphone,battery_life,dimensions,weight,compatibility".split(",");
             // Get config mappings for data
             Map<String, Object> maps = configJson.getJSONObject("mapping").toMap();
             // Now do it
@@ -87,8 +84,9 @@ public class CrawlService extends AbstractEtlService {
             }
 
             Calendar c1 = Calendar.getInstance();
+            System.out.println(tracker.getStartTime());
             c1.setTime(tracker.getStartTime());
-            SimpleDateFormat dateFormat = new SimpleDateFormat("ddMMyy_hhmm");
+            SimpleDateFormat dateFormat = new SimpleDateFormat("ddMMyy_HHmm");
             saveLocationURL = saveLocationURL.replace("ddmmyy_hhmm", dateFormat.format(c1.getTime()));
             exportToCSV(entries, saveLocationURL);
 

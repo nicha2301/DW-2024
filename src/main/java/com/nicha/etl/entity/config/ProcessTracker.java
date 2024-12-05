@@ -38,7 +38,7 @@ public class ProcessTracker {
     private Timestamp endTime;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name = "process_tracker", referencedColumnName = "process_id")
+    @JoinColumn(name = "process_required", referencedColumnName = "process_id")
     private ProcessTracker requiredProcess;
 
     private boolean deleted;

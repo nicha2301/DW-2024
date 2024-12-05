@@ -11,7 +11,7 @@ import java.text.SimpleDateFormat;
  * This class purpose is to hide process tracker and steps done
  * at the start and the end of each ETL tasks
  */
-public abstract class AbstractEtlService {
+public abstract class AbstractEtlService implements IEtlService {
 
     private final LoggingService loggingService;
     protected final ProcessTrackerRepository trackerRepo;
@@ -24,16 +24,6 @@ public abstract class AbstractEtlService {
         this.loggingService = loggingService;
         this.trackerRepo = trackerRepo;
         this.processName = processName;
-
-        // If the tracker is not exists in database, create one and save it in database
-        // Trust me, this tracker will be used throughout this script
-        this.tracker = this.trackerRepo.findByProcessName(this.processName);
-        if (this.tracker == null) {
-            this.tracker = new ProcessTracker();
-            this.tracker.setProcessName(this.processName);
-            this.tracker.setStatus(ProcessTracker.ProcessStatus.READY);
-            this.trackerRepo.save(tracker);
-        }
     }
 
     /**
@@ -50,7 +40,7 @@ public abstract class AbstractEtlService {
             this.tracker.setStartTime(new Timestamp(System.currentTimeMillis()));
         else if (oldStatus == ProcessTracker.ProcessStatus.IN_PROGRESS)
             this.tracker.setEndTime(new Timestamp(System.currentTimeMillis()));
-        this.trackerRepo.save(this.tracker);
+        this.tracker = this.trackerRepo.save(this.tracker);
     }
 
     /**
@@ -95,6 +85,9 @@ public abstract class AbstractEtlService {
      *                 and keep running
      */
     public void run(boolean forceRun) {
+        // If the tracker is not exists in database, create one and save it in database
+        // Trust me, this tracker will be used throughout this script
+        this.tracker = this.trackerRepo.findByProcessName(this.processName);
         // Pre-condition
         if (tracker.getStatus() == ProcessTracker.ProcessStatus.IN_PROGRESS)
             throw new RuntimeException(String.format("Process \"%s\" đang chạy bởi ai đó khác, hủy.", processName));
@@ -104,11 +97,12 @@ public abstract class AbstractEtlService {
             throw new RuntimeException(String.format("Tiến trình \"%s\" đã chạy thành công hôm nay rồi, hủy.", processName));
 
         ProcessTracker pt = tracker.getRequiredProcess();
-        if (pt != null && pt.getStatus() != ProcessTracker.ProcessStatus.SUCCESS)
+        if (!forceRun && pt != null && pt.getStatus() != ProcessTracker.ProcessStatus.SUCCESS)
             throw new RuntimeException(String.format("Process tiên quyết \"%s\" chưa chạy thành công, hủy.", pt.getProcessName()));
 
         // Set state to IN-PROGRESS and log
         changeStatus(ProcessTracker.ProcessStatus.IN_PROGRESS);
+
         Timestamp start = new Timestamp(System.currentTimeMillis());
         SimpleDateFormat format = new SimpleDateFormat("mm:ss.SSS");
         try {
@@ -129,6 +123,7 @@ public abstract class AbstractEtlService {
             changeStatus(ProcessTracker.ProcessStatus.FAILED);
             String errorMsg = String.format("Error while processing \"%s\": %s", processName, e.getMessage());
             logProcess(ProcessLogging.LogLevel.ERROR, errorMsg, start, end);
+            e.printStackTrace(System.err);
             throw new RuntimeException(e);
         }
     }
