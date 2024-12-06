@@ -1,0 +1,81 @@
+{
+  "type": "crawl",
+  "url": "https://cellphones.com.vn/thiet-bi-am-thanh/tai-nghe.html",
+  "location": {
+    "by": "css",
+    "path": "#layout-desktop > div.cps-container.cps-body > div:nth-child(2) > div > div.block-filter-sort > div.filter-sort__list-product > div > div.product-list-filter.is-flex.is-flex-wrap-wrap > div > div.product-info > a",
+    "attribute": "href"
+  },
+  "other_location": {
+    "by": "css",
+    "path": "#productDetailV2 > section > div.box-detail-product.columns.m-0 > div.box-detail-product__box-center.column > div.box-linked > div > a",
+    "attribute": "href"
+  },
+  "mapping": {
+    "product_id": {
+      "by": "css",
+      "path": "#productDetailV2 > section > div.box-detail-product.columns.m-0 > div.box-detail-product__box-center.column > div.box-product-variants > div.box-content > ul > li",
+      "attribute": "data-product-id"
+    },
+    "name": {
+      "by": "css",
+      "path": "#productDetailV2 > section > div.box-header.is-flex.is-align-items-center.box-header-desktop > div.box-product-name > h1",
+      "attribute": ""
+    },
+    "brand": {
+      "by": "css",
+      "path": "#productDetailV2 > section > div.box-header.is-flex.is-align-items-center.box-header-desktop > div.box-product-name > h1",
+      "attribute": ""
+    },
+    "type": {
+      "by": "css",
+      "path": "#productDetailV2 > section > div.box-header.is-flex.is-align-items-center.box-header-desktop > div.box-product-name > h1",
+      "attribute": ""
+    },
+    "price": {
+      "by": "css",
+      "path": "#productDetailV2 > section > div.box-header.is-flex.is-align-items-center.box-header-desktop > div.box-product-name > h1",
+      "attribute": ""
+    },
+    "warranty_info": {
+      "by": "css",
+      "path": "#productDetailV2 > section > div.box-header.is-flex.is-align-items-center.box-header-desktop > div.box-product-name > h1",
+      "attribute": ""
+    },
+    "feature": {
+      "by": "css",
+      "path": "#productDetailV2 > section > div.box-header.is-flex.is-align-items-center.box-header-desktop > div.box-product-name > h1",
+      "attribute": ""
+    },
+    "voice_control": {
+      "by": "css",
+      "path": "#productDetailV2 > section > div.box-header.is-flex.is-align-items-center.box-header-desktop > div.box-product-name > h1",
+      "attribute": ""
+    },
+    "microphone": {
+      "by": "css",
+      "path": "#productDetailV2 > section > div.box-header.is-flex.is-align-items-center.box-header-desktop > div.box-product-name > h1",
+      "attribute": ""
+    },
+    "battery_life": {
+      "by": "css",
+      "path": "#productDetailV2 > section > div.box-header.is-flex.is-align-items-center.box-header-desktop > div.box-product-name > h1",
+      "attribute": ""
+    },
+    "dimensions": {
+      "by": "css",
+      "path": "#productDetailV2 > section > div.box-header.is-flex.is-align-items-center.box-header-desktop > div.box-product-name > h1",
+      "attribute": ""
+    },
+    "weight": {
+      "by": "css",
+      "path": "#productDetailV2 > section > div.box-header.is-flex.is-align-items-center.box-header-desktop > div.box-product-name > h1",
+      "attribute": ""
+    },
+    "compatibility": {
+      "by": "css",
+      "path": "#productDetailV2 > section > div.box-header.is-flex.is-align-items-center.box-header-desktop > div.box-product-name > h1",
+      "attribute": ""
+    }
+  }
+}

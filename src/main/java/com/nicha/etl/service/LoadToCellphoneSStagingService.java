@@ -46,7 +46,7 @@ public class LoadToCellphoneSStagingService extends AbstractEtlService {
             throw new RuntimeException("Crawl save location not found.");
         }
 
-        ProcessTracker crawlTracker = trackerRepo.findByProcessName("Crawl Data");
+        ProcessTracker crawlTracker = tracker.getRequiredProcess();
         Calendar c1 = Calendar.getInstance();
         System.out.println(crawlTracker.getStartTime());
         c1.setTime(crawlTracker.getStartTime());

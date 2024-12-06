@@ -9,6 +9,10 @@ import com.opencsv.ICSVWriter;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONTokener;
+import org.openqa.selenium.*;
+import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.edge.EdgeDriver;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
@@ -18,6 +22,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.util.*;
 
 @Service
@@ -62,17 +67,25 @@ public class CrawlCellphoneSService extends AbstractEtlService {
         try {
             // Read config json
             JSONObject configJson = new JSONObject(new JSONTokener(new FileReader(configFileUrl)));
-            // Try fetching the source
-            JSONObject object = fetchDataHttps(configJson);
-            // Get the products arrays
-            JSONArray array = getJSONRecursiveArray(object, configJson.getString("location"));
+
+            List<String[]> entries = new ArrayList<>();
             // Split the fields from config
             String[] fields = "product_id,name,brand,type,price,warranty_info,feature,voice_control,microphone,battery_life,dimensions,weight,compatibility".split(",");
             // Get config mappings for data
             Map<String, Object> maps = configJson.getJSONObject("mapping").toMap();
-            // Now do it
-            List<Map<String, String>> list = processResponseData(array, fields, maps);
-            List<String[]> entries = new ArrayList<>();
+            List<Map<String, String>> list = new ArrayList<>();
+            if (configJson.getString("type").equals("api")) {
+                // Try fetching the source
+                JSONObject object = fetchDataHttps(configJson);
+                // Get the products arrays
+                JSONArray array = getJSONRecursiveArray(object, configJson.getString("location"));
+                // Now do it
+                list = processResponseData(array, fields, maps);
+            }
+            else if (configJson.getString("type").equals("crawl")) {
+                list = crawlSite(configJson);
+            }
+
             String[] uhh;
             entries.add(fields);
             for (Map<String, String> entry : list) {
@@ -170,5 +183,136 @@ public class CrawlCellphoneSService extends AbstractEtlService {
         writer.writeAll(data, true);
         writer.flush();
         writer.close();
+    }
+
+    private List<Map<String, String>> crawlSite(JSONObject configJson) {
+        String mainUrl = configJson.getString("url");
+        Map<String, Object> maps = configJson.getJSONObject("mapping").toMap();
+//        String loadMore = configJson.getString("load_more_btn");
+
+        Set<Map<String, String>> result = new HashSet<>();
+        String[] fields = "product_id,name,brand,type,price,warranty_info,feature,voice_control,microphone,battery_life,dimensions,weight,compatibility".split(",");
+
+        EdgeDriver webDriver = new EdgeDriver();
+        WebDriverWait webDriverWait = new WebDriverWait(webDriver, Duration.ofSeconds(10));
+        webDriver.get(mainUrl);
+        Map<String, Object> map = configJson.getJSONObject("location").toMap();
+        Set<String> urls = findElements(webDriver, map);
+        Set<String> urls2 = new TreeSet<>();
+//        WebElement loadMoreElement;
+//        while (true) {
+//            try {
+//                loadMoreElement = webDriverWait.until(ExpectedConditions.elementToBeClickable(new By.ByCssSelector(loadMore)));
+//                webDriver.executeScript("arguments[0].click();", loadMoreElement);
+//            } catch (TimeoutException e) {
+//                break;
+//            }
+//        }
+
+        for (String url: urls) {
+            webDriver.get(url);
+            webDriverWait.until(d -> ((JavascriptExecutor) d).executeScript("return document.readyState").equals("complete"));
+            urls2 = findElements(webDriver, configJson.getJSONObject("other_location").toMap());
+            try {
+
+                Map<String, String> productMap = new HashMap<>();
+                for (String field : fields) {
+                    HashMap<String, Object> fieldData = (HashMap<String, Object>) maps.get(field);
+                    String element = findElement(webDriver, fieldData);
+                    productMap.put(field, element);
+                }
+                System.out.println("1, " + productMap);
+                result.add(productMap);
+            }
+            catch (Exception e) {
+                e.printStackTrace(System.err);
+            }
+        }
+        for (String url: urls2) {
+            webDriver.get(url);
+            webDriverWait.until(d -> ((JavascriptExecutor) d).executeScript("return document.readyState").equals("complete"));
+            try {
+                Map<String, String> productMap = new HashMap<>();
+                for (String field : fields) {
+                    HashMap<String, Object> fieldData = (HashMap<String, Object>) maps.get(field);
+                    String element = findElement(webDriver, fieldData);
+                    productMap.put(field, element);
+                }
+                System.out.println("2, "  + productMap);
+                result.add(productMap);
+            }
+            catch (Exception e) {
+                e.printStackTrace(System.err);
+            }
+        }
+        webDriver.quit();
+        return result.stream().toList();
+    }
+
+    private Set<String> findElements(WebDriver instance, Map<String, Object> fieldData) {
+        Set<String> result = new HashSet<>();
+        String by = fieldData.get("by").toString().trim();
+        String path = fieldData.get("path").toString().trim();
+        String attribute = fieldData.get("attribute").toString().trim();
+
+        By byObj = switch (by) {
+            case "id" -> By.id(path);
+            case "tag" -> By.tagName(path);
+            case "name" -> By.name(path);
+            case "class" -> By.className(path);
+            case "href" -> By.linkText(path);
+            case "css" -> By.cssSelector(path);
+            case "xpath" -> By.xpath(path);
+            default -> null;
+        };
+        if (byObj == null) {
+            return null;
+        }
+        List<WebElement> elementList;
+        try {
+            elementList = instance.findElements(byObj);
+            for (WebElement element: elementList) {
+                if (!attribute.isEmpty())
+                    result.add(element.getAttribute(attribute));
+                else
+                    result.add(element.getText());
+            }
+        }
+        catch (NoSuchElementException e) {
+            e.printStackTrace(System.err);
+            result.add("");
+        }
+        return result;
+    }
+
+    private String findElement(WebDriver instance, Map<String, Object> fieldData) {
+        String by = fieldData.get("by").toString().trim();
+        String path = fieldData.get("path").toString().trim();
+        String attribute = fieldData.get("attribute").toString().trim();
+
+        By byObj = switch (by) {
+            case "id" -> By.id(path);
+            case "tag" -> By.tagName(path);
+            case "name" -> By.name(path);
+            case "class" -> By.className(path);
+            case "href" -> By.linkText(path);
+            case "css" -> By.cssSelector(path);
+            case "xpath" -> By.xpath(path);
+            default -> null;
+        };
+        if (byObj == null) {
+            return null;
+        }
+        WebElement element;
+        try {
+            element = instance.findElement(byObj);
+            if (!attribute.isEmpty())
+                return element.getAttribute(attribute);
+            return element.getText();
+        }
+        catch (NoSuchElementException e) {
+            e.printStackTrace(System.err);
+            return "";
+        }
     }
 }

@@ -1,4 +1,5 @@
 {
+  "type": "api",
   "url": "https://api.cellphones.com.vn/v2/graphql/query",
   "method": "POST",
   "header": {
