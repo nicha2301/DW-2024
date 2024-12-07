@@ -25,6 +25,7 @@ public class LoggingService {
 
     public void logProcess(ProcessTracker process, ProcessLogging.LogLevel status, String message, Timestamp startTimestamp, Timestamp endTimestamp) {
         ProcessLogging logging = new ProcessLogging();
+        logger.info(status.name() + ": " + message);
         logging.setLevel(status);
         logging.setMessage(message);
         logging.setProcessTracker(process);
@@ -32,6 +33,5 @@ public class LoggingService {
         logging.setProcessEnd(endTimestamp);
         logging.setDate(new Date(System.currentTimeMillis()));
         processLogRepository.save(logging);
-        logger.info(status.name() + ": " + logging.getMessage());
     }
 }

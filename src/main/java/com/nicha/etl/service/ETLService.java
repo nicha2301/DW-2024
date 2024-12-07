@@ -7,34 +7,34 @@ import org.springframework.stereotype.Service;
 @Service
 public class ETLService extends AbstractEtlService {
 
-    private final CrawlService crawlService;
-    private final ImportToStagingService importToStagingService;
-    private final CleanService cleanService;
-    private final LoadService loadService;
+    private final CrawlCellphoneSService crawlCellphoneSService;
+    private final LoadToCellphoneSStagingService loadToCellphoneSStagingService;
+    private final TransformCellphoneSAndLoadToStagingService transformCellphoneSAndLoadToStagingService;
+    private final LoadToWarehouseService loadToWarehouseService;
 
     @Autowired
     protected ETLService(LoggingService loggingService,
                          ProcessTrackerRepository trackerRepo,
-                         CrawlService crawlService,
-                         ImportToStagingService importToStagingService,
-                         CleanService cleanService,
-                         LoadService loadService) {
+                         CrawlCellphoneSService crawlCellphoneSService,
+                         LoadToCellphoneSStagingService loadToCellphoneSStagingService,
+                         TransformCellphoneSAndLoadToStagingService transformCellphoneSAndLoadToStagingService,
+                         LoadToWarehouseService loadToWarehouseService) {
         super(loggingService, trackerRepo, "Main");
-        this.crawlService = crawlService;
-        this.importToStagingService = importToStagingService;
-        this.cleanService = cleanService;
-        this.loadService = loadService;
+        this.crawlCellphoneSService = crawlCellphoneSService;
+        this.loadToCellphoneSStagingService = loadToCellphoneSStagingService;
+        this.transformCellphoneSAndLoadToStagingService = transformCellphoneSAndLoadToStagingService;
+        this.loadToWarehouseService = loadToWarehouseService;
     }
 
     @Override
     protected void process(boolean forceRun) {
         // 1. Crawl Data
-        crawlService.run(forceRun);
+        crawlCellphoneSService.run(forceRun);
         // 1.5 Load to staging
-        importToStagingService.run(forceRun);
+        loadToCellphoneSStagingService.run(forceRun);
         // 2. Clean Data
-        cleanService.run(forceRun);
+        transformCellphoneSAndLoadToStagingService.run(forceRun);
         // 3. Load Data to Warehouse
-        loadService.run(forceRun);
+        loadToWarehouseService.run(forceRun);
     }
 }

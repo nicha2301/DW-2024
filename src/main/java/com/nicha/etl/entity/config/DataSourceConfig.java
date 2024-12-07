@@ -26,15 +26,6 @@ public class DataSourceConfig {
     @Column(name = "ds_crawl_save_location")
     private String crawlSaveLocation;
 
-    @Column(name = "tbl_staging")
-    private String stagingTableName;
-
-    @Column(name = "fields_staging")
-    private String stagingFields;
-
-    @Column(name = "fields_staging_daily")
-    private String stagingDailyFields;
-
     private boolean deleted;
 
 }

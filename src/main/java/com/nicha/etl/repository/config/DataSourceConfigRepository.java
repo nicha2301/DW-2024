@@ -8,5 +8,5 @@ import org.springframework.data.repository.CrudRepository;
 import java.util.List;
 
 public interface DataSourceConfigRepository extends JpaRepository<DataSourceConfig, Long> {
-
+    DataSourceConfig findByName(String name);
 }
