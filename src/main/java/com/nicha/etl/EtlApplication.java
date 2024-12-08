@@ -1,7 +1,6 @@
 package com.nicha.etl;
 
 import com.nicha.etl.service.ETLService;
-import com.nicha.etl.service.LoadToWarehouseService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
