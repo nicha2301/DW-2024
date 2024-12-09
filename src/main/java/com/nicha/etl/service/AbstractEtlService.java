@@ -3,6 +3,7 @@ package com.nicha.etl.service;
 import com.nicha.etl.entity.config.ProcessLogging;
 import com.nicha.etl.entity.config.ProcessTracker;
 import com.nicha.etl.repository.config.ProcessTrackerRepository;
+import lombok.Getter;
 
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
@@ -13,9 +14,10 @@ import java.text.SimpleDateFormat;
  */
 public abstract class AbstractEtlService implements IEtlService {
 
-    private final LoggingService loggingService;
+    protected final LoggingService loggingService;
     protected final ProcessTrackerRepository trackerRepo;
     protected ProcessTracker tracker;
+    @Getter
     protected String processName;
 
     protected AbstractEtlService(LoggingService loggingService,
@@ -79,12 +81,7 @@ public abstract class AbstractEtlService implements IEtlService {
      */
     protected abstract void process(boolean forceRun);
 
-    /**
-     * The RECOMMENDED method to run the ETL tasks
-     * @param forceRun boolean, if true the process will bypass the successful run of today
-     *                 and keep running
-     */
-    public void run(boolean forceRun) {
+    protected Timestamp preRunCheck(boolean forceRun) {
         // If the tracker is not exists in database, create one and save it in database
         // Trust me, this tracker will be used throughout this script
         this.tracker = this.trackerRepo.findByProcessName(this.processName);
@@ -104,27 +101,46 @@ public abstract class AbstractEtlService implements IEtlService {
         changeStatus(ProcessTracker.ProcessStatus.IN_PROGRESS);
 
         Timestamp start = new Timestamp(System.currentTimeMillis());
+        // Log its starting point
+        String startingMsg = String.format("Starting process \"%s\"", processName);
+        logProcess(ProcessLogging.LogLevel.INFO, startingMsg, start, start);
+        return start;
+    }
+
+    /**
+     * The RECOMMENDED method to run the ETL tasks
+     * @param forceRun boolean, if true the process will bypass the successful run of today
+     *                 and keep running
+     */
+    public void run(boolean forceRun) {
         SimpleDateFormat format = new SimpleDateFormat("mm:ss.SSS");
+        Timestamp start = new Timestamp(System.currentTimeMillis());
         try {
-            // Log its starting point
-            String startingMsg = String.format("Starting process \"%s\"", processName);
-            logProcess(ProcessLogging.LogLevel.INFO, startingMsg, start, start);
+            start = preRunCheck(forceRun);
             // Do process in this only method
             process(forceRun);
             // Set state to SUCCESS and log end because it was finished without exception
-            Timestamp end = new Timestamp(System.currentTimeMillis());
-            changeStatus(ProcessTracker.ProcessStatus.SUCCESS);
-            String completedMsg = String.format("Completed process \"%s\" in: %ss", processName, format.format(end.getTime() - start.getTime()));
-            logProcess(ProcessLogging.LogLevel.INFO, completedMsg, start, end);
+            postRunMethod(format, start);
         }
         catch (Exception e) {
-            // When exception is thrown, set state to FAILURE and log it
-            Timestamp end = new Timestamp(System.currentTimeMillis());
-            changeStatus(ProcessTracker.ProcessStatus.FAILED);
-            String errorMsg = String.format("Error while processing \"%s\": %s", processName, e.getMessage());
-            logProcess(ProcessLogging.LogLevel.ERROR, errorMsg, start, end);
-            e.printStackTrace(System.err);
+            postRunMethodExceptionCatch(e, start);
             throw new RuntimeException(e);
         }
     }
+
+    protected void postRunMethod(SimpleDateFormat format, Timestamp start) {
+        Timestamp end = new Timestamp(System.currentTimeMillis());
+        changeStatus(ProcessTracker.ProcessStatus.SUCCESS);
+        String completedMsg = String.format("Completed process \"%s\" in: %ss", processName, format.format(end.getTime() - start.getTime()));
+        logProcess(ProcessLogging.LogLevel.INFO, completedMsg, start, end);
+    }
+
+    protected void postRunMethodExceptionCatch(Exception e, Timestamp start) {
+        // When exception is thrown, set state to FAILURE and log it
+        Timestamp end = new Timestamp(System.currentTimeMillis());
+        changeStatus(ProcessTracker.ProcessStatus.FAILED);
+        String errorMsg = String.format("Error while processing \"%s\": %s", processName, e.getMessage());
+        logProcess(ProcessLogging.LogLevel.ERROR, errorMsg, start, end);
+    }
+
 }

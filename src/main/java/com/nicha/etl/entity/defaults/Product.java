@@ -43,9 +43,6 @@ public class Product {
     private String weight;
     private String compatibility;
 
-    @Column(name = "created_at", updatable = false)
-    private Date createdAt;
-
     private boolean isDelete;
 
     @Column(name = "date_delete")

@@ -42,7 +42,7 @@ public class ProcessLogging {
     private String message;
 
     @Column(name = "log_date")
-    private Date date;
+    private Timestamp date;
 
     private boolean deleted;
 }

@@ -61,6 +61,7 @@ public class LoadToCellphoneSStagingService extends AbstractEtlService {
     }
 
     private void loadIntoTable(String csvFileURL) {
+        jdbcTemplate.update("DELETE FROM staging_head_phone");
         jdbcTemplate.execute("LOAD DATA INFILE '"+ csvFileURL + "' REPLACE INTO TABLE staging_head_phone " +
                 "FIELDS TERMINATED BY ',' ENCLOSED BY '\"' LINES TERMINATED BY '\\n' " +
                 "IGNORE 1 LINES " +
