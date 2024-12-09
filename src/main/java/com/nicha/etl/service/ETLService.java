@@ -2,7 +2,6 @@ package com.nicha.etl.service;
 
 import com.nicha.etl.entity.config.ProcessLogging;
 import com.nicha.etl.entity.config.ProcessTracker;
-import com.nicha.etl.repository.config.ProcessTrackerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -99,6 +98,8 @@ public class ETLService extends AbstractEtlService {
         Timestamp start = new Timestamp(System.currentTimeMillis());
         try {
             start = preRunCheck(forceRun);
+            if (start == null)
+                return;
             processFailed();
             // Set state to SUCCESS and log end because it was finished without exception
             postRunMethod(format, start);

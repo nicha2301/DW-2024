@@ -72,8 +72,10 @@ public abstract class AbstractEtlService implements IEtlService {
             throw new RuntimeException(String.format("Process \"%s\" đang chạy bởi ai đó khác, hủy.", processName));
 
         // Bước 2: Kiểm tra process đã chạy thành công hôm nay chưa
-        if (!forceRun && tracker.lastStartedToday() && tracker.getStatus() == ProcessTracker.ProcessStatus.SUCCESS)
-            throw new RuntimeException(String.format("Tiến trình \"%s\" đã chạy thành công hôm nay rồi, hủy.", processName));
+        if (!forceRun && tracker.lastStartedToday() && tracker.getStatus() == ProcessTracker.ProcessStatus.SUCCESS) {
+            logProcess(ProcessLogging.LogLevel.WARN, String.format("Tiến trình \"%s\" đã chạy thành công hôm nay rồi, hủy.", processName));
+            return null;
+        }
 
         ProcessTracker pt = tracker.getRequiredProcess();
         if (!forceRun && pt != null && pt.getStatus() != ProcessTracker.ProcessStatus.SUCCESS)
@@ -99,6 +101,8 @@ public abstract class AbstractEtlService implements IEtlService {
         Timestamp start = new Timestamp(System.currentTimeMillis());
         try {
             start = preRunCheck(forceRun);
+            if (start == null)
+                return;
             // Do process in this only method
             process(forceRun);
             // Set state to SUCCESS and log end because it was finished without exception
