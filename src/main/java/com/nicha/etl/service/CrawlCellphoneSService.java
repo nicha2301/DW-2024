@@ -13,6 +13,7 @@ import org.openqa.selenium.*;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.edge.EdgeDriver;
 import org.openqa.selenium.support.ui.WebDriverWait;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
@@ -32,6 +33,7 @@ public class CrawlCellphoneSService extends AbstractEtlService {
     private final HttpClient httpClient;
     private final HttpRequest.Builder httpRequestBuilder;
 
+    @Autowired
     protected CrawlCellphoneSService(LoggingService loggingService,
                                      ProcessTrackerRepository trackerRepo,
                                      DataSourceConfigRepository dataSourceConfigRepository) {
@@ -80,6 +82,7 @@ public class CrawlCellphoneSService extends AbstractEtlService {
                 // Get the products arrays
                 JSONArray array = getJSONRecursiveArray(object, configJson.getString("location"));
                 // Now do it
+                assert array != null;
                 list = processResponseData(array, fields, maps);
             }
             else if (configJson.getString("type").equals("crawl")) {
@@ -209,6 +212,7 @@ public class CrawlCellphoneSService extends AbstractEtlService {
 //            }
 //        }
 
+        assert urls != null;
         for (String url: urls) {
             webDriver.get(url);
             webDriverWait.until(d -> ((JavascriptExecutor) d).executeScript("return document.readyState").equals("complete"));
@@ -228,6 +232,7 @@ public class CrawlCellphoneSService extends AbstractEtlService {
                 e.printStackTrace(System.err);
             }
         }
+        assert urls2 != null;
         for (String url: urls2) {
             webDriver.get(url);
             webDriverWait.until(d -> ((JavascriptExecutor) d).executeScript("return document.readyState").equals("complete"));

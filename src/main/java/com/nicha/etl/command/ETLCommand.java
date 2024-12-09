@@ -77,7 +77,7 @@ public class ETLCommand {
                     etlService.runTransformCellphoneSAndLoadToStagingService(forceRun);
                     break;
                 case "load-warehouse":
-                    etlService.loadToWarehouseService(forceRun);
+                    etlService.runLoadToWarehouseService(forceRun);
                     break;
                 default:
                     System.out.println("Can't run process " + processName);

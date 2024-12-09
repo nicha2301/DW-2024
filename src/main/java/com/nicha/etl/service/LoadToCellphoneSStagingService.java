@@ -5,6 +5,7 @@ import com.nicha.etl.entity.config.ProcessLogging;
 import com.nicha.etl.entity.config.ProcessTracker;
 import com.nicha.etl.repository.config.DataSourceConfigRepository;
 import com.nicha.etl.repository.config.ProcessTrackerRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +20,7 @@ public class LoadToCellphoneSStagingService extends AbstractEtlService {
     private final JdbcTemplate jdbcTemplate;
     private final DataSourceConfigRepository dataSourceConfigRepository;
 
+    @Autowired
     protected LoadToCellphoneSStagingService(LoggingService loggingService,
                                              ProcessTrackerRepository trackerRepo,
                                              JdbcTemplate jdbcTemplate,

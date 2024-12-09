@@ -4,7 +4,6 @@ import com.nicha.etl.entity.config.ProcessLogging;
 import com.nicha.etl.entity.config.ProcessTracker;
 import com.nicha.etl.repository.config.ProcessTrackerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
@@ -67,8 +66,8 @@ public class ETLService extends AbstractEtlService {
         transformCellphoneSAndLoadToStagingService.run(forceRun);
     }
 
-    public void loadToWarehouseService(boolean forceRun) {
-        loadToCellphoneSStagingService.run(forceRun);
+    public void runLoadToWarehouseService(boolean forceRun) {
+        loadToWarehouseService.run(forceRun);
     }
 
     private void processFailed() {
@@ -87,7 +86,7 @@ public class ETLService extends AbstractEtlService {
             // 2. Clean Data
             transformCellphoneSAndLoadToStagingService.run(true);
         }
-        tracker1 = trackerRepo.findByProcessName(crawlCellphoneSService.getProcessName());
+        tracker1 = trackerRepo.findByProcessName(loadToWarehouseService.getProcessName());
         if (tracker1.getStatus() == ProcessTracker.ProcessStatus.FAILED) {
             // 3. Load Data to Warehouse
             loadToWarehouseService.run(true);
@@ -114,8 +113,10 @@ public class ETLService extends AbstractEtlService {
         List<ProcessLogging> result = loggingService.getLogMessages(amount);
 
         String formatString = "%s:%s - %s (%s) [%s, %s]\n\"%s\"\n";
-        System.out.printf(formatString, "LogID", "Process ID", "Log Date", "Log Level", "Log Process Start Time", "Log Process End Time", "Log Message");
-        for (ProcessLogging log : result) {
+        System.out.printf(formatString, "LogID", "Process ID", "Log Detate", "Log Level", "Log Process Start Time", "Log Process End Time", "Log Message");
+        System.out.println("-----");
+        for (int i = 0; i < result.size(); i++) {
+            ProcessLogging log = result.get(result.size() - 1 - i);
             System.out.printf(formatString, log.getId(), "", log.getDate(), log.getLevel(), log.getProcessStart(), log.getProcessEnd(), log.getMessage());
         }
     }
