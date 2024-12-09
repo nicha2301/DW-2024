@@ -16,8 +16,6 @@ spring:
   shell:
     interactive:
       enabled: true
-    context:
-      close: true
 
-logging.level.org.hibernate.SQL: DEBUG
-logging.level.org.hibernate.type: TRACE
+#logging.level.org.hibernate.SQL: DEBUG
+#logging.level.org.hibernate.type: TRACE

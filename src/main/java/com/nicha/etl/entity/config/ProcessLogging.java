@@ -24,7 +24,7 @@ public class ProcessLogging {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "log_process_id")
     private ProcessTracker processTracker;
 
