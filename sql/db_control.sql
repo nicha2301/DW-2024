@@ -26,7 +26,7 @@ CREATE TABLE if not exists logs (
                                     log_process_end DATETIME,
                                     log_level INT,
                                     log_message VARCHAR(1024),
-                                    log_date DATE,
+                                    log_date DATETIME,
                                     deleted BOOLEAN DEFAULT FALSE
 );
 
