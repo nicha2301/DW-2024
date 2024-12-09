@@ -20,12 +20,12 @@ public class ETLService extends AbstractEtlService {
 
     @Autowired
     protected ETLService(LoggingService loggingService,
-                         ProcessTrackerRepository trackerRepo,
+                         ProcessTrackerService trackerService,
                          CrawlCellphoneSService crawlCellphoneSService,
                          LoadToCellphoneSStagingService loadToCellphoneSStagingService,
                          TransformCellphoneSAndLoadToStagingService transformCellphoneSAndLoadToStagingService,
                          LoadToWarehouseService loadToWarehouseService) {
-        super(loggingService, trackerRepo, "Main");
+        super(loggingService, trackerService, "Main");
         this.crawlCellphoneSService = crawlCellphoneSService;
         this.loadToCellphoneSStagingService = loadToCellphoneSStagingService;
         this.transformCellphoneSAndLoadToStagingService = transformCellphoneSAndLoadToStagingService;
@@ -45,7 +45,7 @@ public class ETLService extends AbstractEtlService {
     }
 
     public void printAllProcessTrackerStatus() {
-        List<ProcessTracker> result = trackerRepo.findAll();
+        List<ProcessTracker> result = trackerService.getAllProcessTrackers();
         String formatString = "%-3s\t%-12s\t%-60s\t%-20s\t%-24s\t%-24s\n";
         System.out.printf(formatString, "PID", "Required PID", "Process Name", "Process Status", "Process Last Start Time", "Process Last End Time");
         for (ProcessTracker tracker : result) {
@@ -71,22 +71,22 @@ public class ETLService extends AbstractEtlService {
     }
 
     private void processFailed() {
-        ProcessTracker tracker1 = trackerRepo.findByProcessName(crawlCellphoneSService.getProcessName());
+        ProcessTracker tracker1 = trackerService.getProcessTrackerByName(crawlCellphoneSService.getProcessName());
         if (tracker1.getStatus() == ProcessTracker.ProcessStatus.FAILED) {
             // 1. Crawl Data
             crawlCellphoneSService.run(true);
         }
-        tracker1 = trackerRepo.findByProcessName(loadToCellphoneSStagingService.getProcessName());
+        tracker1 = trackerService.getProcessTrackerByName(loadToCellphoneSStagingService.getProcessName());
         if (tracker1.getStatus() == ProcessTracker.ProcessStatus.FAILED) {
             // 1.5 Load to staging
             loadToCellphoneSStagingService.run(true);
         }
-        tracker1 = trackerRepo.findByProcessName(transformCellphoneSAndLoadToStagingService.getProcessName());
+        tracker1 = trackerService.getProcessTrackerByName(transformCellphoneSAndLoadToStagingService.getProcessName());
         if (tracker1.getStatus() == ProcessTracker.ProcessStatus.FAILED) {
             // 2. Clean Data
             transformCellphoneSAndLoadToStagingService.run(true);
         }
-        tracker1 = trackerRepo.findByProcessName(loadToWarehouseService.getProcessName());
+        tracker1 = trackerService.getProcessTrackerByName(loadToWarehouseService.getProcessName());
         if (tracker1.getStatus() == ProcessTracker.ProcessStatus.FAILED) {
             // 3. Load Data to Warehouse
             loadToWarehouseService.run(true);
@@ -113,11 +113,11 @@ public class ETLService extends AbstractEtlService {
         List<ProcessLogging> result = loggingService.getLogMessages(amount);
 
         String formatString = "%s:%s - %s (%s) [%s, %s]\n\"%s\"\n";
-        System.out.printf(formatString, "LogID", "Process ID", "Log Detate", "Log Level", "Log Process Start Time", "Log Process End Time", "Log Message");
+        System.out.printf(formatString, "LogID", "Process Name", "Log Date", "Log Level", "Log Process Start Time", "Log Process End Time", "Log Message");
         System.out.println("-----");
         for (int i = 0; i < result.size(); i++) {
             ProcessLogging log = result.get(result.size() - 1 - i);
-            System.out.printf(formatString, log.getId(), "", log.getDate(), log.getLevel(), log.getProcessStart(), log.getProcessEnd(), log.getMessage());
+            System.out.printf(formatString, log.getId(), log.getProcessTracker().getProcessName(), log.getDate(), log.getLevel(), log.getProcessStart(), log.getProcessEnd(), log.getMessage());
         }
     }
 }

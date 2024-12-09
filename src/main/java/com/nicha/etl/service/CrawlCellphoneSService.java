@@ -3,7 +3,6 @@ package com.nicha.etl.service;
 import com.nicha.etl.entity.config.DataSourceConfig;
 import com.nicha.etl.entity.config.ProcessLogging;
 import com.nicha.etl.repository.config.DataSourceConfigRepository;
-import com.nicha.etl.repository.config.ProcessTrackerRepository;
 import com.opencsv.CSVWriterBuilder;
 import com.opencsv.ICSVWriter;
 import org.json.JSONArray;
@@ -35,9 +34,9 @@ public class CrawlCellphoneSService extends AbstractEtlService {
 
     @Autowired
     protected CrawlCellphoneSService(LoggingService loggingService,
-                                     ProcessTrackerRepository trackerRepo,
+                                     ProcessTrackerService trackerService,
                                      DataSourceConfigRepository dataSourceConfigRepository) {
-        super(loggingService, trackerRepo, "Crawl CellphoneS Data");
+        super(loggingService, trackerService, "Crawl CellphoneS Data");
         this.dataSourceConfigRepository = dataSourceConfigRepository;
         this.httpClient = HttpClient.newBuilder().build();
         this.httpRequestBuilder = HttpRequest.newBuilder();

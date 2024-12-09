@@ -2,7 +2,6 @@ package com.nicha.etl.service;
 
 import com.nicha.etl.entity.config.ProcessLogging;
 import com.nicha.etl.entity.config.ProcessTracker;
-import com.nicha.etl.repository.config.ProcessTrackerRepository;
 import lombok.Getter;
 
 import java.sql.Timestamp;
@@ -15,34 +14,17 @@ import java.text.SimpleDateFormat;
 public abstract class AbstractEtlService implements IEtlService {
 
     protected final LoggingService loggingService;
-    protected final ProcessTrackerRepository trackerRepo;
+    protected final ProcessTrackerService trackerService;
     protected ProcessTracker tracker;
     @Getter
     protected String processName;
 
     protected AbstractEtlService(LoggingService loggingService,
-                                 ProcessTrackerRepository trackerRepo,
+                                 ProcessTrackerService trackerService,
                                  String processName) {
         this.loggingService = loggingService;
-        this.trackerRepo = trackerRepo;
+        this.trackerService = trackerService;
         this.processName = processName;
-    }
-
-    /**
-     * This method serves as a way to change the process status, it will change
-     * status and save it to database
-     * - If changed to IN_PROGRESS, the start time will be set to current time
-     * - If the based state was IN_PROGRESS, the end time will be set to current time
-     * @param newStatus Status to be changed into
-     */
-    protected void changeStatus(ProcessTracker.ProcessStatus newStatus) {
-        ProcessTracker.ProcessStatus oldStatus = this.tracker.getStatus();
-        this.tracker.setStatus(newStatus);
-        if (newStatus == ProcessTracker.ProcessStatus.IN_PROGRESS)
-            this.tracker.setStartTime(new Timestamp(System.currentTimeMillis()));
-        else if (oldStatus == ProcessTracker.ProcessStatus.IN_PROGRESS)
-            this.tracker.setEndTime(new Timestamp(System.currentTimeMillis()));
-        this.tracker = this.trackerRepo.save(this.tracker);
     }
 
     /**
@@ -84,7 +66,7 @@ public abstract class AbstractEtlService implements IEtlService {
     protected Timestamp preRunCheck(boolean forceRun) {
         // If the tracker is not exists in database, create one and save it in database
         // Trust me, this tracker will be used throughout this script
-        this.tracker = this.trackerRepo.findByProcessName(this.processName);
+        this.tracker = this.trackerService.getProcessTrackerByName(this.processName);
         // Pre-condition
         if (tracker.getStatus() == ProcessTracker.ProcessStatus.IN_PROGRESS)
             throw new RuntimeException(String.format("Process \"%s\" đang chạy bởi ai đó khác, hủy.", processName));
@@ -98,7 +80,7 @@ public abstract class AbstractEtlService implements IEtlService {
             throw new RuntimeException(String.format("Process tiên quyết \"%s\" chưa chạy thành công, hủy.", pt.getProcessName()));
 
         // Set state to IN-PROGRESS and log
-        changeStatus(ProcessTracker.ProcessStatus.IN_PROGRESS);
+        this.tracker = trackerService.changeProcessStatus(processName, ProcessTracker.ProcessStatus.IN_PROGRESS);
 
         Timestamp start = new Timestamp(System.currentTimeMillis());
         // Log its starting point
@@ -130,7 +112,7 @@ public abstract class AbstractEtlService implements IEtlService {
 
     protected void postRunMethod(SimpleDateFormat format, Timestamp start) {
         Timestamp end = new Timestamp(System.currentTimeMillis());
-        changeStatus(ProcessTracker.ProcessStatus.SUCCESS);
+        this.tracker = trackerService.changeProcessStatus(processName, ProcessTracker.ProcessStatus.SUCCESS);
         String completedMsg = String.format("Completed process \"%s\" in: %ss", processName, format.format(end.getTime() - start.getTime()));
         logProcess(ProcessLogging.LogLevel.INFO, completedMsg, start, end);
     }
@@ -138,7 +120,7 @@ public abstract class AbstractEtlService implements IEtlService {
     protected void postRunMethodExceptionCatch(Exception e, Timestamp start) {
         // When exception is thrown, set state to FAILURE and log it
         Timestamp end = new Timestamp(System.currentTimeMillis());
-        changeStatus(ProcessTracker.ProcessStatus.FAILED);
+        this.tracker = trackerService.changeProcessStatus(processName, ProcessTracker.ProcessStatus.FAILED);
         String errorMsg = String.format("Error while processing \"%s\": %s", processName, e.getMessage());
         logProcess(ProcessLogging.LogLevel.ERROR, errorMsg, start, end);
     }

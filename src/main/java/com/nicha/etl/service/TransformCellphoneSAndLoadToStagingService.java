@@ -12,9 +12,9 @@ public class TransformCellphoneSAndLoadToStagingService extends AbstractEtlServi
 
     @Autowired
     protected TransformCellphoneSAndLoadToStagingService(LoggingService loggingService,
-                                                         ProcessTrackerRepository trackerRepo,
+                                                         ProcessTrackerService trackerService,
                                                          JdbcTemplate jdbcTemplate) {
-        super(loggingService, trackerRepo, "Transform CellphoneS Staging and Load to Global Staging");
+        super(loggingService, trackerService, "Transform CellphoneS Staging and Load to Global Staging");
         this.jdbcTemplate = jdbcTemplate;
     }
 

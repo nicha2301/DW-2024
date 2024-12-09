@@ -19,7 +19,7 @@ public class ETLCommand {
         this.etlService = etlService;
     }
 
-    @Command(command = "log", description = "Print out processes along with states and required process ID")
+    @Command(command = "log", description = "Print out system log messages")
     public void checkLogs(@Option(
             defaultValue = "0",
             longNames = "amount",
@@ -34,7 +34,7 @@ public class ETLCommand {
         etlService.printAllProcessTrackerStatus();
     }
 
-    @Command(command = "run-all", description = "Run a whole ETL process cycle keyword")
+    @Command(command = "run-all", description = "Run a whole ETL process cycle")
     public void runProcessCycle(@Option(
             defaultValue = "false",
             description = "Optional variable, bypass successful run today",
