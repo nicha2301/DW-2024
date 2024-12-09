@@ -12,7 +12,7 @@ CREATE TABLE if not exists ds_config (
 CREATE TABLE if not exists process_tracker (
                                                process_id INT AUTO_INCREMENT PRIMARY KEY,
                                                process_name VARCHAR(255),
-                                               process_status ENUM('READY', 'IN_PROGRESS', 'SUCCESS', 'FAILURE') DEFAULT 'READY',
+                                               process_status ENUM('READY', 'IN_PROGRESS', 'SUCCESS', 'FAILED') DEFAULT 'READY',
                                                process_last_start_time DATETIME,
                                                process_last_end_time DATETIME,
                                                process_required INT UNIQUE REFERENCES process_tracker(process_id),
